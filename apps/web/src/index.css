@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+@theme {
+  --color-palladio-black: #101012;
+  --color-palladio-white: #ffffff;
+  --color-palladio-offwhite: #f6f5f2;
+  --color-palladio-grey: #6e6e6e;
+  --color-palladio-lightgrey: #e5e3df;
+  --color-palladio-border: #dedcd6;
+  --color-palladio-gold: #a9895f;
+
+  --font-display: "Jost", Futura, "Century Gothic", sans-serif;
+  --font-logo: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Jost", Futura, "Century Gothic", sans-serif;
+
+  --max-width-8xl: 1920px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  color: var(--color-palladio-black);
+  background: var(--color-palladio-white);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tracked-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.font-display {
+  font-weight: 400;
+}
+
+/* Bulgari-style headings: Futura-like caps, small and confident */
+.bv-title {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: 0.02em;
+}
+
+.btn-outline {
+  display: inline-block;
+  padding: 14px 36px;
+  border: 1px solid var(--color-palladio-black);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  transition: background 0.3s ease, color 0.3s ease;
+  background: transparent;
+  color: var(--color-palladio-black);
+}
+.btn-outline:hover {
+  background: var(--color-palladio-black);
+  color: var(--color-palladio-white);
+}
+
+.btn-solid {
+  display: inline-block;
+  padding: 14px 36px;
+  border: 1px solid var(--color-palladio-black);
+  background: var(--color-palladio-black);
+  color: var(--color-palladio-white);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.btn-solid:hover {
+  background: var(--color-palladio-white);
+  color: var(--color-palladio-black);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

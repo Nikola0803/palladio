@@ -1,0 +1,14 @@
+{
+  "name": "palladio-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/crm",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:crm": "cd apps/crm && npm run dev",
+    "dev:web": "cd apps/web && npm run dev",
+    "build:crm": "cd apps/crm && npm run build",
+    "build:web": "cd apps/web && npm run build"
+  }
+}
