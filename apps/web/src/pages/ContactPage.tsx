@@ -84,7 +84,7 @@ export default function ContactPage() {
       .filter(Boolean)
       .join("\n");
 
-    window.location.href = `mailto:hello@palladio.hr?subject=${encodeURIComponent(
+    window.location.href = `mailto:info@palladio.hr?subject=${encodeURIComponent(
       `[${form.subject || "General Inquiry"}] Website Contact Form`
     )}&body=${encodeURIComponent(body)}`;
 

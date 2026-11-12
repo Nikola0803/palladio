@@ -88,4 +88,22 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
     intro: "Subscribe using the form at the bottom of any page to hear about new pieces and launches.",
     sections: [],
   },
+  "cad-design": {
+    title: "CAD Design",
+    intro: "We design every custom piece digitally before it's cast, so you can see and approve the exact form before production begins.",
+    sections: [
+      {
+        heading: "What is CAD design?",
+        body: "Computer-aided design (CAD) lets us build a precise 3D model of your piece — exact dimensions, stone placement and metal weight — before a single gram of gold is used.",
+      },
+      {
+        heading: "How the process works",
+        body: "You share your reference or idea. We produce a CAD render for your review. Once approved, we move to casting and finishing. Changes at the render stage cost nothing.",
+      },
+      {
+        heading: "Request a CAD consultation",
+        body: "Get in touch through the Contact page, choose Custom Order / Design Request, and describe what you have in mind. We'll come back with a timeline and quote.",
+      },
+    ],
+  },
 };

@@ -23,6 +23,21 @@ export interface ProductCategoryRef {
 export interface ProductAttribute {
   name: string;
   value: string;
+  options?: string[];
+}
+
+export interface StoreAttributeTerm {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface StoreProductAttribute {
+  id: number;
+  name: string;
+  taxonomy: string;
+  has_variations: boolean;
+  terms: StoreAttributeTerm[];
 }
 
 export interface Product {
@@ -38,6 +53,7 @@ export interface Product {
   stock_status: "instock" | "outofstock" | "onbackorder";
   short_description: string;
   description?: string;
+  type?: string;
   attributes?: ProductAttribute[];
   images: ProductImage[];
   categories: ProductCategoryRef[];

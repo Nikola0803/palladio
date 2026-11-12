@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAsync } from "../hooks/useAsync";
 import { getCategories, getProducts } from "../lib/api";
-import { fullSize } from "../lib/images";
 import type { Category, Product } from "../types/catalog";
 
 /**
@@ -15,7 +14,7 @@ function findMaterialCategory(categories: Category[], keyword: string) {
   return categories.find((c) => c.name.toLowerCase().includes(keyword) || c.slug.toLowerCase().includes(keyword));
 }
 
-const imageOf = (p?: Product) => fullSize(p?.images?.[0]?.src);
+const imageOf = (p?: Product) => p?.images?.[0]?.src ?? undefined;
 
 function Backdrop({ product, lazy }: { product?: Product; lazy?: boolean }) {
   const src = imageOf(product);

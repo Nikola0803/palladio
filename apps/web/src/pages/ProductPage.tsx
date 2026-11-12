@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAsync } from "../hooks/useAsync";
 import { getProductBySlug, getProducts } from "../lib/api";
+import { getStoreProduct } from "../lib/store-api";
 import AddToCartForm from "../components/product/AddToCartForm";
+import ColorSwitcher, { getColorHex, isColorAttribute } from "../components/product/ColorSwitcher";
 import ProductCard from "../components/product/ProductCard";
 import Breadcrumbs from "../components/ui/Breadcrumbs";
 import { toggleWishlist, useWishlist } from "../lib/wishlist";
@@ -12,9 +14,25 @@ export default function ProductPage() {
   const { slug = "" } = useParams<{ slug: string }>();
   const { data: product, loading, error } = useAsync(() => getProductBySlug(slug), [slug]);
   const [activeImage, setActiveImage] = useState(0);
+  const [selectedVariation, setSelectedVariation] = useState<Record<string, string>>({});
   const wishlist = useWishlist();
   const wishlisted = wishlist.some((p) => p.id === product?.id);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const { data: storeProduct } = useAsync(
+    () => (product ? getStoreProduct(product.id) : Promise.resolve(null)),
+    [product?.id]
+  );
+
+  const colorAttrs = (storeProduct?.attributes || []).filter(
+    (a) => a.has_variations && isColorAttribute(a.name)
+  );
+
+  const variationPayload = colorAttrs.flatMap((a) => {
+    const val = selectedVariation[a.taxonomy || a.name];
+    if (!val) return [];
+    return [{ attribute: a.taxonomy || a.name, value: val }];
+  });
 
   const primaryCategory = product?.categories?.[0];
   const { data: related } = useAsync(
@@ -140,8 +158,35 @@ export default function ProductPage() {
             />
           )}
 
+          {colorAttrs.length > 0 && (
+            <div className="mb-2">
+              {colorAttrs.map((a) => (
+                <ColorSwitcher
+                  key={a.id}
+                  attributeName={a.name}
+                  options={a.terms.map((t) => ({
+                    value: t.name,
+                    slug: t.slug,
+                    hex: getColorHex(t.name),
+                  }))}
+                  selected={selectedVariation[a.taxonomy || a.name] ?? null}
+                  onSelect={(slug) =>
+                    setSelectedVariation((prev) => ({
+                      ...prev,
+                      [a.taxonomy || a.name]: slug,
+                    }))
+                  }
+                />
+              ))}
+            </div>
+          )}
+
           <div className="space-y-3">
-            <AddToCartForm productId={product.id} inStock={product.stock_status === "instock"} />
+            <AddToCartForm
+              productId={product.id}
+              inStock={product.stock_status === "instock"}
+              variation={variationPayload.length ? variationPayload : undefined}
+            />
             <a
               href="/contact-us"
               className="btn-outline w-full block text-center"

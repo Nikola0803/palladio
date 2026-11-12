@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Category } from "../../types/catalog";
+import { useIsAdmin } from "../../hooks/useIsAdmin";
 import PalladioLogo from "../ui/PalladioLogo";
 import { CloseIcon } from "../ui/icons";
 
@@ -12,6 +13,7 @@ export default function MobileMenu({
   onClose: () => void;
   categories: Category[];
 }) {
+  const isAdmin = useIsAdmin();
   const topLevel = categories.filter((c) => c.parent === 0);
   const childrenOf = (parentId: number) => categories.filter((c) => c.parent === parentId);
 
@@ -76,6 +78,11 @@ export default function MobileMenu({
           <Link to="/wishlist" onClick={onClose} className="tracked-label px-5 py-4 border-b border-palladio-border">
             My Wishlist
           </Link>
+          {isAdmin && (
+            <Link to="/cad-design" onClick={onClose} className="tracked-label px-5 py-4 border-b border-palladio-border">
+              CAD Design
+            </Link>
+          )}
         </nav>
       </div>
     </div>

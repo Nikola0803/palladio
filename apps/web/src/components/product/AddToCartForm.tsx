@@ -1,14 +1,22 @@
 import { useState } from "react";
 import { addToCart } from "../../lib/store-api";
 
-export default function AddToCartForm({ productId, inStock }: { productId: number; inStock: boolean }) {
+export default function AddToCartForm({
+  productId,
+  inStock,
+  variation,
+}: {
+  productId: number;
+  inStock: boolean;
+  variation?: { attribute: string; value: string }[];
+}) {
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   async function handleAddToCart() {
     setStatus("loading");
     try {
-      await addToCart(productId, quantity);
+      await addToCart(productId, quantity, variation);
       setStatus("success");
     } catch (err) {
       console.error(err);

@@ -32,11 +32,27 @@ export function getCart() {
   return storeApiFetch("/cart");
 }
 
-export function addToCart(id: number, quantity = 1) {
+export function addToCart(
+  id: number,
+  quantity = 1,
+  variation?: { attribute: string; value: string }[]
+) {
+  const payload: Record<string, unknown> = { id, quantity };
+  if (variation?.length) payload.variation = variation;
   return storeApiFetch("/cart/add-item", {
     method: "POST",
-    body: JSON.stringify({ id, quantity }),
+    body: JSON.stringify(payload),
   }).then(notify);
+}
+
+export async function getStoreProduct(
+  id: number
+): Promise<{ id: number; type: string; attributes: import("../types/catalog").StoreProductAttribute[] } | null> {
+  try {
+    return await storeApiFetch(`/products/${id}`);
+  } catch {
+    return null;
+  }
 }
 
 export function updateCartItem(key: string, quantity: number) {

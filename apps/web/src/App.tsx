@@ -4,20 +4,22 @@ import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import HomePage from "./pages/HomePage"; // eager — first paint
 
-const GoldSilverPage       = lazy(() => import("./pages/GoldSilverPage"));
+const GoldSilverPage        = lazy(() => import("./pages/GoldSilverPage"));
 const EngagementWeddingPage = lazy(() => import("./pages/EngagementWeddingPage"));
-const BlogPage             = lazy(() => import("./pages/BlogPage"));
-const BlogPostPage         = lazy(() => import("./pages/BlogPostPage"));
-const CollectionPage       = lazy(() => import("./pages/CollectionPage"));
-const ProductPage          = lazy(() => import("./pages/ProductPage"));
-const ContactPage          = lazy(() => import("./pages/ContactPage"));
-const StaticPage           = lazy(() => import("./pages/StaticPage"));
-const CartPage             = lazy(() => import("./pages/CartPage"));
-const CheckoutPage         = lazy(() => import("./pages/CheckoutPage"));
-const OrderReceivedPage    = lazy(() => import("./pages/OrderReceivedPage"));
-const WishlistPage         = lazy(() => import("./pages/WishlistPage"));
-const SearchPage           = lazy(() => import("./pages/SearchPage"));
-const NotFoundPage         = lazy(() => import("./pages/NotFoundPage"));
+const BlogPage              = lazy(() => import("./pages/BlogPage"));
+const BlogPostPage          = lazy(() => import("./pages/BlogPostPage"));
+const CollectionPage        = lazy(() => import("./pages/CollectionPage"));
+const ProductPage           = lazy(() => import("./pages/ProductPage"));
+const ContactPage           = lazy(() => import("./pages/ContactPage"));
+const StaticPage            = lazy(() => import("./pages/StaticPage"));
+const StoreLocatorPage      = lazy(() => import("./pages/StoreLocatorPage"));
+const AboutPage             = lazy(() => import("./pages/AboutPage"));
+const CartPage              = lazy(() => import("./pages/CartPage"));
+const CheckoutPage          = lazy(() => import("./pages/CheckoutPage"));
+const OrderReceivedPage     = lazy(() => import("./pages/OrderReceivedPage"));
+const WishlistPage          = lazy(() => import("./pages/WishlistPage"));
+const SearchPage            = lazy(() => import("./pages/SearchPage"));
+const NotFoundPage          = lazy(() => import("./pages/NotFoundPage"));
 
 export default function App() {
   return (
@@ -34,7 +36,7 @@ export default function App() {
           <Route path="/jewellery" element={<CollectionPage all />} />
           <Route path="/collection/:slug" element={<CollectionPage />} />
           <Route path="/product/:slug" element={<ProductPage />} />
-          <Route path="/store-locator" element={<StaticPage slug="store-locator" />} />
+          <Route path="/store-locator" element={<StoreLocatorPage />} />
           <Route path="/contact-us" element={<ContactPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/cart" element={<CartPage />} />
@@ -45,7 +47,8 @@ export default function App() {
           <Route path="/newsletter" element={<StaticPage slug="newsletter" />} />
           <Route path="/shipping-returns" element={<StaticPage slug="shipping-returns" />} />
           <Route path="/faq" element={<StaticPage slug="faq" />} />
-          <Route path="/about" element={<StaticPage slug="about" />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/cad-design" element={<StaticPage slug="cad-design" />} />
           <Route path="/privacy-policy" element={<StaticPage slug="privacy-policy" />} />
           <Route path="/cookies-policy" element={<StaticPage slug="cookies-policy" />} />
           <Route path="/terms-of-use" element={<StaticPage slug="terms-of-use" />} />

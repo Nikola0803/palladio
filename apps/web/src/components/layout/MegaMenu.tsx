@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAsync } from "../../hooks/useAsync";
 import { useCategoryImages } from "../../hooks/useCategoryImages";
+import { useIsAdmin } from "../../hooks/useIsAdmin";
 import { getProducts } from "../../lib/api";
 import { fullSize } from "../../lib/images";
 import type { Category } from "../../types/catalog";
@@ -42,11 +43,14 @@ export default function MegaMenu({
   const featuredPieces = (promo?.items || []).slice(1, 7);
   const promoImage = fullSize(promoProduct?.images?.[0]?.src);
 
+  const isAdmin = useIsAdmin();
+
   const quickLinks = [
     { label: "Gold & Silver", href: "/gold-silver" },
     { label: "Engagement & Wedding", href: "/engagement-wedding" },
     { label: "Custom Pieces", href: "/contact-us" },
     { label: "Journal", href: "/blog" },
+    ...(isAdmin ? [{ label: "CAD Design", href: "/cad-design" }] : []),
   ];
 
   return (
