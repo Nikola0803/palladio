@@ -1,5 +1,27 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Component } from "react";
+import type { ReactNode } from "react";
 import { Routes, Route } from "react-router-dom";
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+          <h2>Something went wrong</h2>
+          <pre style={{ color: "red", whiteSpace: "pre-wrap" }}>{this.state.error.message}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import HomePage from "./pages/HomePage"; // eager — first paint
@@ -23,6 +45,7 @@ const NotFoundPage          = lazy(() => import("./pages/NotFoundPage"));
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
@@ -61,5 +84,6 @@ export default function App() {
       </main>
       <Footer />
     </div>
+    </ErrorBoundary>
   );
 }
