@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 /**
  * POST /api/stripe/cart-intent
  * Kreira Stripe PaymentIntent za cart checkout (ne za payment links).
@@ -12,12 +22,12 @@ export async function POST(req: NextRequest) {
   const { amount, currency, order_id } = await req.json();
 
   if (!amount || amount < 50) {
-    return NextResponse.json({ error: "Iznos je prenizak." }, { status: 400 });
+    return NextResponse.json({ error: "Iznos je prenizak." }, { status: 400, headers: CORS });
   }
 
   const sk = process.env.STRIPE_SECRET_KEY;
   if (!sk) {
-    return NextResponse.json({ error: "Stripe nije konfiguriran." }, { status: 500 });
+    return NextResponse.json({ error: "Stripe nije konfiguriran." }, { status: 500, headers: CORS });
   }
 
   const stripeRes = await fetch("https://api.stripe.com/v1/payment_intents", {
@@ -39,12 +49,12 @@ export async function POST(req: NextRequest) {
   if (!data.client_secret) {
     return NextResponse.json(
       { error: data.error?.message || "Stripe greška." },
-      { status: 502 }
+      { status: 502, headers: CORS }
     );
   }
 
   return NextResponse.json({
     client_secret: data.client_secret,
     intent_id: data.id,
-  });
+  }, { headers: CORS });
 }

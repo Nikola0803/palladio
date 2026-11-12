@@ -11,8 +11,8 @@
     }
   },
   "rewrites": [
+    { "source": "/crm",      "destination": { "service": "crm" } },
     { "source": "/crm/(.*)", "destination": { "service": "crm" } },
-    { "source": "/api/(.*)",  "destination": { "service": "crm" } },
-    { "source": "/(.*)",      "destination": { "service": "web" } }
+    { "source": "/(.*)",     "destination": { "service": "web" } }
   ]
 }
