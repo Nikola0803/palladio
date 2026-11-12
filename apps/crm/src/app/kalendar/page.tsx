@@ -16,7 +16,7 @@ export default async function KalendarPage() {
     ...obavezeRows.map((o) => ({
       datum: o.datum,
       naslov: o.naslov,
-      tip: o.tip ?? "ostalo",
+      tip: (o.tip ?? "ostalo") as "ostalo" | "faktura" | "radni_nalog",
       zavrseno: !!o.zavrseno,
     })),
     ...fakture
