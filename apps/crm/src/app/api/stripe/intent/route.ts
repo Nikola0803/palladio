@@ -5,17 +5,27 @@ import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 /**
  * POST /api/stripe/intent
  * Kreira Stripe PaymentIntent za payment link token.
- * Poziva se s /plati/[token] frontenda.
+ * Poziva se s /plati/[token] frontenda (CRM ili palladio.hr web app).
  * Body: { token: string }
  */
 export async function POST(req: NextRequest) {
   const { token } = await req.json();
 
   if (!token) {
-    return NextResponse.json({ error: "Token nedostaje." }, { status: 400 });
+    return NextResponse.json({ error: "Token nedostaje." }, { status: 400, headers: CORS });
   }
 
   const [row] = await db
@@ -27,13 +37,13 @@ export async function POST(req: NextRequest) {
   if (!row || row.status !== "aktivan") {
     return NextResponse.json(
       { error: "Link nije aktivan ili ne postoji." },
-      { status: 404 }
+      { status: 404, headers: CORS }
     );
   }
 
-  const sk = process.env.STRIPE_SECRET_KEY;
+  const sk = (process.env.STRIPE_SECRET_KEY || "").replace(/^﻿/, "").trim();
   if (!sk) {
-    return NextResponse.json({ error: "Stripe nije konfiguriran." }, { status: 500 });
+    return NextResponse.json({ error: "Stripe nije konfiguriran." }, { status: 500, headers: CORS });
   }
 
   const amountInt = Math.round(Number(row.iznos) * 100);
@@ -63,7 +73,7 @@ export async function POST(req: NextRequest) {
   if (!data.client_secret) {
     return NextResponse.json(
       { error: data.error?.message || "Stripe greška." },
-      { status: 502 }
+      { status: 502, headers: CORS }
     );
   }
 
@@ -80,5 +90,5 @@ export async function POST(req: NextRequest) {
     customer_name: row.kupacIme || "",
     description: row.opis || "",
     hero_image: row.heroImage || "",
-  });
+  }, { headers: CORS });
 }

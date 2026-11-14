@@ -1,5 +1,5 @@
 import {
-  pgTable, serial, text, integer, real, boolean, timestamp,
+  pgTable, serial, text, integer, real, boolean, timestamp, jsonb,
 } from "drizzle-orm/pg-core";
 
 export const sirovine = pgTable("sirovine", {
@@ -242,5 +242,56 @@ export const paymentLinks = pgTable("payment_links", {
   napomena: text("napomena"),
   kreirano: timestamp("kreirano").defaultNow(),
   azurirano: timestamp("azurirano").defaultNow(),
+  placenoAt: timestamp("placeno_at"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+});
+
+/* ── BLOG POSTS — journal objave ── */
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  excerpt: text("excerpt"),
+  content: text("content"),
+  featuredImage: text("featured_image"),
+  authorName: text("author_name").default("Palladio"),
+  published: boolean("published").notNull().default(false),
+  publishedAt: timestamp("published_at"),
+  kreirano: timestamp("kreirano").defaultNow(),
+  azurirano: timestamp("azurirano").defaultNow(),
+});
+
+/* ── CRM USERS — vlastiti korisnici, nema veze s WP ── */
+export const crmUsers = pgTable("crm_users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  ime: text("ime"),
+  uloga: text("uloga").notNull().default("admin"),
+  aktivan: boolean("aktivan").notNull().default(true),
+  kreiran: timestamp("kreiran").defaultNow(),
+  zadnjiLogin: timestamp("zadnji_login"),
+});
+
+/* ── PRODUCTS — uvezeni iz WooCommerce ── */
+export const products = pgTable("products", {
+  id: integer("id").primaryKey(),
+  type: text("type").notNull().default("simple"),
+  sku: text("sku"),
+  name: text("name").notNull(),
+  slug: text("slug"),
+  published: boolean("published").default(true),
+  shortDescription: text("short_description"),
+  description: text("description"),
+  regularPrice: real("regular_price"),
+  salePrice: real("sale_price"),
+  categories: text("categories"),
+  tags: text("tags"),
+  images: text("images"),
+  parentId: integer("parent_id"),
+  attributes: jsonb("attributes"),
+  metalPurity: text("metal_purity"),
+  totalWeight: text("total_weight"),
+  position: integer("position").default(0),
+  kreirano: timestamp("kreirano").defaultNow(),
 });

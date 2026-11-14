@@ -11,9 +11,10 @@ export default async function PaymentLinksPage() {
     .from(paymentLinks)
     .orderBy(desc(paymentLinks.id));
 
-  const linkovi = rows.map(({ kreirano, azurirano, ...rest }) => ({
+  const linkovi = rows.map(({ kreirano, azurirano, placenoAt, ...rest }) => ({
     ...rest,
     kreirano: kreirano?.toISOString() ?? null,
+    placenoAt: placenoAt?.toISOString() ?? null,
   }));
 
   return <PaymentLinksClient pocetniLinkovi={linkovi} />;

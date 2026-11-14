@@ -3,5 +3,8 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/wp-content/uploads/:path*", "destination": "/api/wp-image?path=:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

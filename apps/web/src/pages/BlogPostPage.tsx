@@ -20,7 +20,7 @@ export default function BlogPostPage() {
       <section className="max-w-3xl mx-auto px-6 py-24 text-center">
         <h1 className="bv-title md:text-[22px] mb-4">Post Not Found</h1>
         <p className="text-palladio-grey">
-          {error ? `Couldn't reach the blog (${error.message}).` : "This post doesn't exist or was unpublished."}
+          {error ? `Greška pri učitavanju (${error.message}).` : "Ova objava ne postoji ili je povučena."}
         </p>
       </section>
     );

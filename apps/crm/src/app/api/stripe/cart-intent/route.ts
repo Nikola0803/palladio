@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Iznos je prenizak." }, { status: 400, headers: CORS });
   }
 
-  const sk = process.env.STRIPE_SECRET_KEY;
+  const sk = (process.env.STRIPE_SECRET_KEY || "").replace(/^﻿/, "").trim();
   if (!sk) {
     return NextResponse.json({ error: "Stripe nije konfiguriran." }, { status: 500, headers: CORS });
   }

@@ -23,6 +23,7 @@ export async function GET() {
       heroImage: paymentLinks.heroImage,
       napomena: paymentLinks.napomena,
       kreirano: paymentLinks.kreirano,
+      placenoAt: paymentLinks.placenoAt,
     })
     .from(paymentLinks)
     .leftJoin(kupci, eq(paymentLinks.kupacId, kupci.id))
@@ -34,7 +35,7 @@ export async function GET() {
 // POST /api/payment-links — kreiraj novi
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { kupac_ime, kupac_id, opis, iznos, valuta, hero_image, napomena } = body;
+  const { kupacIme, kupacId, opis, iznos, valuta, heroImage, napomena } = body;
 
   if (!iznos || isNaN(Number(iznos))) {
     return NextResponse.json({ error: "Iznos je obavezan." }, { status: 400 });
@@ -45,17 +46,16 @@ export async function POST(req: NextRequest) {
     .insert(paymentLinks)
     .values({
       token,
-      kupacId: kupac_id || null,
-      kupacIme: kupac_ime || null,
+      kupacId: kupacId || null,
+      kupacIme: kupacIme || null,
       opis: opis || null,
       iznos: Number(iznos),
       valuta: valuta || "EUR",
-      heroImage: hero_image || null,
+      heroImage: heroImage || null,
       napomena: napomena || null,
       status: "aktivan",
     })
     .returning();
 
-  const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}/plati/${token}`;
-  return NextResponse.json({ ...row, short_url: shortUrl }, { status: 201 });
+  return NextResponse.json({ paymentLink: row }, { status: 201 });
 }

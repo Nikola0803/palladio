@@ -14,6 +14,7 @@ type PaymentLink = {
   heroImage: string | null;
   napomena: string | null;
   kreirano: string | null;
+  placenoAt: string | null;
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -38,7 +39,7 @@ function money(iznos: number, valuta: string) {
   });
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_CRM_URL || "";
+const BASE_URL = (process.env.NEXT_PUBLIC_WEB_URL || "https://www.palladio.hr").replace(/^﻿/, "").replace(/\/+$/, "");
 
 export default function PaymentLinksClient({
   pocetniLinkovi,
@@ -237,7 +238,8 @@ export default function PaymentLinksClient({
                 <th className="text-left pb-3 pr-4">Kupac / Opis</th>
                 <th className="text-right pb-3 pr-4">Iznos</th>
                 <th className="text-left pb-3 pr-4">Status</th>
-                <th className="text-left pb-3 pr-4">Datum</th>
+                <th className="text-left pb-3 pr-4">Kreirano</th>
+                <th className="text-left pb-3 pr-4">Plaćeno</th>
                 <th className="text-right pb-3">Akcije</th>
               </tr>
             </thead>
@@ -277,6 +279,18 @@ export default function PaymentLinksClient({
                           day: "2-digit", month: "2-digit", year: "numeric",
                         })
                       : "—"}
+                  </td>
+                  <td className="py-3 pr-4 text-xs">
+                    {link.placenoAt ? (
+                      <span className="text-moss font-medium">
+                        {new Date(link.placenoAt).toLocaleString("hr-HR", {
+                          day: "2-digit", month: "2-digit", year: "numeric",
+                          hour: "2-digit", minute: "2-digit",
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-silver/40">—</span>
+                    )}
                   </td>
                   <td className="py-3">
                     <div className="flex items-center justify-end gap-1">

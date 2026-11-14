@@ -18,8 +18,7 @@ export default function BlogPage() {
 
       {error && (
         <p className="text-center text-sm text-red-600 max-w-md mx-auto mb-10">
-          Couldn&apos;t reach the blog ({error.message}). Confirm posts exist in wp-admin and the site's
-          own REST API isn&apos;t blocked.
+          Nije moguće učitati objave ({error.message}).
         </p>
       )}
 
@@ -50,8 +49,7 @@ export default function BlogPage() {
       ) : (
         !error && (
           <p className="text-center text-palladio-grey py-12">
-            No posts published yet — write your first one in wp-admin and it&apos;ll show up here
-            automatically.
+            Nema objava još — napiši prvu u CRM-u i automatski će se pojaviti ovdje.
           </p>
         )
       )}

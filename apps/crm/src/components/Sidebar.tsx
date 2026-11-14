@@ -21,6 +21,7 @@ import {
   Menu,
   X,
   Link2,
+  Newspaper,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -29,6 +30,12 @@ const NAV_GROUPS = [
     items: [
       { href: "/dashboard", label: "Početna", icon: LayoutDashboard },
       { href: "/dnevnik", label: "Dnevnik", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Web",
+    items: [
+      { href: "/blog", label: "Journal / Blog", icon: Newspaper },
     ],
   },
   {
@@ -115,14 +122,29 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function LogoutButton() {
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+  return (
+    <button
+      onClick={handleLogout}
+      className="w-full text-left px-3 py-2.5 rounded-md text-sm text-ink-400 border border-transparent hover:text-red-400 hover:bg-red-400/10 hover:border-red-400/20 transition-colors flex items-center gap-3"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Odjava
+    </button>
+  );
+}
+
 function StatusFooter() {
   return (
-    <div className="px-5 py-4 border-t border-ink-700 text-[11px] text-ink-400">
-      Sinkronizirano s WooCommerce
-      <div className="flex items-center gap-1.5 mt-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-moss" />
-        Povezano
-      </div>
+    <div className="px-3 py-4 border-t border-ink-700 space-y-1">
+      <LogoutButton />
+      <div className="px-3 text-[10px] text-ink-400/50">Palladio CRM</div>
     </div>
   );
 }
@@ -131,10 +153,12 @@ export default function Sidebar() {
   const [otvoreno, setOtvoreno] = useState(false);
   const pathname = usePathname();
 
-  // Close the mobile drawer on route change.
+  // Always call hooks before any early return.
   useEffect(() => {
     setOtvoreno(false);
   }, [pathname]);
+
+  if (pathname === "/login") return null;
 
   return (
     <>

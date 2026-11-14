@@ -42,6 +42,7 @@ const OrderReceivedPage     = lazy(() => import("./pages/OrderReceivedPage"));
 const WishlistPage          = lazy(() => import("./pages/WishlistPage"));
 const SearchPage            = lazy(() => import("./pages/SearchPage"));
 const NotFoundPage          = lazy(() => import("./pages/NotFoundPage"));
+const PlatiPage             = lazy(() => import("./pages/PlatiPage"));
 
 export default function App() {
   return (
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/privacy-policy" element={<StaticPage slug="privacy-policy" />} />
           <Route path="/cookies-policy" element={<StaticPage slug="cookies-policy" />} />
           <Route path="/terms-of-use" element={<StaticPage slug="terms-of-use" />} />
+          <Route path="/plati/:token" element={<PlatiPage />} />
           {/* /my-account is intentionally NOT handled here — the Palladio
               Frontend Loader plugin's SPA router excludes that prefix so
               WooCommerce's own account pages keep serving it directly. */}
