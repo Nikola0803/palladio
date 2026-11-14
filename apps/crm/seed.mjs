@@ -62,5 +62,8 @@ try {
   console.log("[seed] Admin created: admin@palladio.hr");
 } catch (err) {
   console.error("[seed] Error:", err.message);
-  process.exit(0); // don't fail the build
 }
+
+// @vercel/postgres keeps the WebSocket connection open — force exit so the
+// build command doesn't hang waiting for the event loop to drain.
+process.exit(0);
