@@ -1,8 +1,8 @@
 import type { BlogPost } from "../types/blog";
 import { cachedJson } from "./fetch-cache";
-import { cleanUrl } from "./env";
+import { crmUrl } from "./env";
 
-const CRM_URL = cleanUrl(import.meta.env.VITE_CRM_URL);
+const CRM_URL = crmUrl(import.meta.env.VITE_CRM_URL);
 const BLOG_BASE = `${CRM_URL}/api/blog`;
 
 function crmFetch<T = unknown>(path: string): Promise<T> {

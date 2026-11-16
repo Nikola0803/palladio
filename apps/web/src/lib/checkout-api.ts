@@ -10,10 +10,10 @@
  * (kompatibilnost za slučaj da CRM nije deployat).
  */
 
-import { cleanUrl } from "./env";
+import { cleanUrl, crmUrl } from "./env";
 
 const WP_URL  = cleanUrl(import.meta.env.VITE_WP_URL);
-const CRM_URL = cleanUrl(import.meta.env.VITE_CRM_URL);
+const CRM_URL = crmUrl(import.meta.env.VITE_CRM_URL);
 
 const STORE_BASE = `${WP_URL}/wp-json/wc/store/v1`;
 
