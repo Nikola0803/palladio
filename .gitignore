@@ -1,2 +1,17 @@
 .vercel
 .env*
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.next/
+build/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
