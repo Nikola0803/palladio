@@ -1,2 +1,23 @@
 .vercel
 .env*
+
+# Dependencies
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Build output
+dist/
+.next/
+build/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Next.js generated
+next-env.d.ts
