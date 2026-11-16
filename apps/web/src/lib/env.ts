@@ -8,13 +8,8 @@ export const cleanUrl = (v?: string | null): string =>
     .trim()
     .replace(/\/+$/, "");
 
-// The CRM (catalog / blog / PaymentIntent) is a Vercel app. Its stable Vercel
-// domain works regardless of where the palladio.hr DNS points. palladio.hr
-// itself is the WordPress/WooCommerce host and does NOT serve the CRM API, so
-// if the env is empty or still points there, fall back to the Vercel CRM.
+// The CRM (catalog / blog / PaymentIntent) is a separate Vercel app, reached
+// cross-origin. Set VITE_CRM_URL to its real, reachable domain. If it is unset
+// we fall back to the project's default Vercel domain.
 const CRM_FALLBACK = "https://palladio-crm.vercel.app";
-export const crmUrl = (v?: string | null): string => {
-  const c = cleanUrl(v);
-  if (!c || /(^|\/\/)(www\.)?palladio\.hr/i.test(c)) return CRM_FALLBACK;
-  return c;
-};
+export const crmUrl = (v?: string | null): string => cleanUrl(v) || CRM_FALLBACK;
