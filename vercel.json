@@ -1,18 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
-    "crm": {
-      "root": "apps/crm",
-      "framework": "nextjs"
-    },
     "web": {
       "root": "apps/web",
       "framework": "vite"
     }
   },
   "rewrites": [
-    { "source": "/crm",      "destination": { "service": "crm" } },
-    { "source": "/crm/(.*)", "destination": { "service": "crm" } },
-    { "source": "/(.*)",     "destination": { "service": "web" } }
+    { "source": "/(.*)", "destination": { "service": "web" } }
   ]
 }
