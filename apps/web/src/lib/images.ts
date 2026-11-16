@@ -2,13 +2,16 @@
 export const fullSize = (url?: string | null) => url?.replace(/-\d+x\d+(?=\.\w+$)/, "");
 
 /**
- * Rewrite absolute WordPress media URLs (palladio.hr / www.palladio.hr) to a
- * RELATIVE /wp-content/uploads/... path. Relative paths are served by this
- * site's own image proxy (apps/web/api/wp-image.js), which fetches from the
- * Hostinger origin by IP — so images keep working regardless of where the
- * palladio.hr DNS points. Non-WordPress and already-relative URLs pass through.
+ * Rewrite a WordPress media URL to this site's own image proxy
+ * (apps/web/api/wp-image.js), which fetches from the Hostinger origin by IP —
+ * so images keep working regardless of where the palladio.hr DNS points, and
+ * without depending on a path rewrite firing. Also strips a leading BOM /
+ * zero-width char that has crept into some env values. Non-WP URLs pass through
+ * (minus any BOM).
  */
 export const proxied = (url?: string | null): string => {
   if (!url) return "";
-  return url.replace(/^https?:\/\/(?:www\.)?palladio\.hr(?=\/wp-content\/uploads\/)/i, "");
+  const clean = url.replace(/^﻿/, "").trim();
+  const m = clean.match(/\/wp-content\/uploads\/(.+)$/i);
+  return m ? `/api/wp-image?path=${m[1]}` : clean;
 };
