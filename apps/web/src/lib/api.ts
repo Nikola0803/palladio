@@ -1,6 +1,7 @@
 import type { Category, Product, ProductListResponse } from "../types/catalog";
 import { cachedJson } from "./fetch-cache";
 import { proxied } from "./images";
+import { cleanUrl } from "./env";
 
 // Route every catalog image through the same-origin proxy so it stays
 // independent of the palladio.hr DNS (see images.ts / api/wp-image.js).
@@ -13,7 +14,7 @@ const normProduct = (p: Product): Product => ({
  * Catalog client — now backed by the Palladio CRM (Neon DB) instead of WordPress.
  * VITE_CRM_URL must be set (e.g. https://palladio-crm.vercel.app).
  */
-const CRM_URL = (import.meta.env.VITE_CRM_URL || "").replace(/^﻿/, "").replace(/\/+$/, "");
+const CRM_URL = cleanUrl(import.meta.env.VITE_CRM_URL);
 const API_BASE = `${CRM_URL}/api`;
 const HEADERS = { Accept: "application/json" } as const;
 

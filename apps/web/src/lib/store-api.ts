@@ -3,7 +3,9 @@
  * sessions, no API keys required — safe to call from the browser.
  * Docs: https://developer.woocommerce.com/docs/apis/store-api/
  */
-const WP_URL = (import.meta.env.VITE_WP_URL || "").replace(/\/+$/, "");
+import { cleanUrl } from "./env";
+
+const WP_URL = cleanUrl(import.meta.env.VITE_WP_URL);
 const STORE_API_BASE = `${WP_URL}/wp-json/wc/store/v1`;
 
 async function storeApiFetch(path: string, options: RequestInit = {}) {
