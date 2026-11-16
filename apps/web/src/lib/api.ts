@@ -1,5 +1,13 @@
 import type { Category, Product, ProductListResponse } from "../types/catalog";
 import { cachedJson } from "./fetch-cache";
+import { proxied } from "./images";
+
+// Route every catalog image through the same-origin proxy so it stays
+// independent of the palladio.hr DNS (see images.ts / api/wp-image.js).
+const normProduct = (p: Product): Product => ({
+  ...p,
+  images: (p.images || []).map((im) => ({ ...im, src: proxied(im.src) })),
+});
 
 /**
  * Catalog client — now backed by the Palladio CRM (Neon DB) instead of WordPress.
@@ -22,7 +30,9 @@ function apiFetch<T>(path: string): Promise<T> {
 
 export function getCategories(opts: { parentOnly?: boolean } = {}): Promise<Category[]> {
   const qs = opts.parentOnly ? "?parent_only=1" : "";
-  return apiFetch<Category[]>(`/catalog/categories${qs}`);
+  return apiFetch<Category[]>(`/catalog/categories${qs}`).then((cats) =>
+    cats.map((c) => ({ ...c, image: c.image ? proxied(c.image) : c.image }))
+  );
 }
 
 // ----- Products -----
@@ -37,9 +47,12 @@ export function getProducts(
   if (opts.random) params.set("random", "1");
   if (opts.search) params.set("search", opts.search);
   const qs = params.toString();
-  return apiFetch<ProductListResponse>(`/catalog/products${qs ? `?${qs}` : ""}`);
+  return apiFetch<ProductListResponse>(`/catalog/products${qs ? `?${qs}` : ""}`).then((r) => ({
+    ...r,
+    items: (r.items || []).map(normProduct),
+  }));
 }
 
 export function getProductBySlug(slug: string): Promise<Product> {
-  return apiFetch<Product>(`/catalog/products/${encodeURIComponent(slug)}`);
+  return apiFetch<Product>(`/catalog/products/${encodeURIComponent(slug)}`).then(normProduct);
 }
