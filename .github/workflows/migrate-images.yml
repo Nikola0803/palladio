@@ -1,0 +1,52 @@
+name: Migrate images to Vercel Blob
+
+# Manual, one-off migration of product + landing images off palladio.hr into
+# Vercel Blob. Runs on a GitHub runner (which can reach palladio.hr), so it does
+# NOT depend on the Vercel deploy / current build failure.
+#
+# Setup (once): add two repository secrets under
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+#     POSTGRES_URL           your Neon/Vercel Postgres connection string
+#     BLOB_READ_WRITE_TOKEN  from Vercel -> Storage -> Blob store -> Tokens
+# Then run it from the Actions tab -> "Migrate images to Vercel Blob" -> Run
+# workflow. Leave "dry" checked first to preview; uncheck to migrate for real.
+#
+# The old->new URL map is uploaded as a build artifact ("image-url-map") you can
+# download afterwards.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: "Dry run (preview only, no downloads/uploads/DB writes)"
+        type: boolean
+        default: true
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        working-directory: apps/crm
+        run: npm install
+
+      - name: Run migration
+        working-directory: apps/crm
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: node scripts/migrate-images.mjs ${{ inputs.dry && '--dry' || '' }}
+
+      - name: Upload URL map
+        if: ${{ !inputs.dry }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-url-map
+          path: apps/crm/scripts/image-url-map.json
+          if-no-files-found: ignore
