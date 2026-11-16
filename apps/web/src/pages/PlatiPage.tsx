@@ -120,7 +120,7 @@ function PayForm({ data }: { data: IntentData }) {
       <div>
         <ExpressCheckoutElement
           onConfirm={handleExpressConfirm}
-          onReady={({ availablePaymentMethods }) => {
+          onReady={({ availablePaymentMethods }: { availablePaymentMethods?: { applePay?: boolean; googlePay?: boolean } }) => {
             setShowExpressCheckout(
               !!(availablePaymentMethods?.applePay || availablePaymentMethods?.googlePay)
             );

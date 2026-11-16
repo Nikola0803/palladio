@@ -16,7 +16,7 @@ export default function HomePage() {
         subtitle="Discover the full collection."
         ctaLabel="Shop the Creations"
         ctaHref={categories?.[0] ? `/collection/${categories[0].slug}` : "/"}
-        imageUrl="/wp-content/uploads/2026/10/render0.jpg"
+        imageUrl="/api/wp-image?path=2026/10/render0.jpg"
       />
 
       {categoriesError && (
@@ -31,7 +31,7 @@ export default function HomePage() {
         <CategoryBanner
           title={featured.name}
           href={`/collection/${featured.slug}`}
-          imageUrl="/wp-content/uploads/2026/10/render-1.jpg"
+          imageUrl="/api/wp-image?path=2026/10/render-1.jpg"
         />
       )}
     </>
