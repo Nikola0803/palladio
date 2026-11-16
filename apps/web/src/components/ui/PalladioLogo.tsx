@@ -1,17 +1,38 @@
 /**
- * Palladio wordmark. Uses the real dark logo (palladio-logo-dark.png) once
- * it's dropped into /public/logo-dark.png — see README "Assets to add"
- * section. Falls back to a styled text wordmark so the header/footer still
- * look intentional if the image is ever missing (e.g. build without the
- * asset), rather than showing a broken image icon.
+ * Palladio wordmark — the real registered logo (PALLADIO®).
+ *
+ * Rendered from /public/logo-wordmark.svg via a CSS mask so the mark is painted
+ * in `currentColor`. That makes it automatically adapt to its background:
+ *   - on a light surface it inherits the dark text colour (default)
+ *   - on a dark surface pass `invert` (or set the text colour) and it turns white
+ *
+ * Using a mask keeps a single source SVG for both variants (no separate
+ * light/dark files to keep in sync) and avoids a broken-image state — if the
+ * asset ever fails to load the element is simply empty rather than showing a
+ * browser placeholder.
  */
+
+// Intrinsic aspect ratio of the wordmark artwork (from the SVG viewBox).
+const WORDMARK_RATIO = "321.58 / 53.41";
+
 export default function PalladioLogo({ className, invert }: { className?: string; invert?: boolean }) {
   return (
     <span
-      className={`inline-flex items-center uppercase tracking-[0.42em] text-[1.6rem] md:text-[2.1rem] leading-none select-none ${invert ? "text-white" : ""} ${className || ""}`}
-      style={{ fontFamily: "var(--font-logo)" }}
-    >
-      Palladio
-    </span>
+      role="img"
+      aria-label="Palladio"
+      className={`inline-block align-middle select-none ${invert ? "text-white" : ""} ${className || ""}`}
+      style={{
+        aspectRatio: WORDMARK_RATIO,
+        backgroundColor: "currentColor",
+        WebkitMaskImage: "url(/logo-wordmark.svg)",
+        maskImage: "url(/logo-wordmark.svg)",
+        WebkitMaskRepeat: "no-repeat",
+        maskRepeat: "no-repeat",
+        WebkitMaskPosition: "center",
+        maskPosition: "center",
+        WebkitMaskSize: "contain",
+        maskSize: "contain",
+      }}
+    />
   );
 }
