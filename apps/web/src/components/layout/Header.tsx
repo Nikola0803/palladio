@@ -4,6 +4,7 @@ import { useAsync } from "../../hooks/useAsync";
 import { getCategories } from "../../lib/api";
 import { CART_EVENT, getCart } from "../../lib/store-api";
 import { useWishlist } from "../../lib/wishlist";
+import { cleanUrl } from "../../lib/env";
 import PalladioLogo from "../ui/PalladioLogo";
 import MobileMenu from "./MobileMenu";
 import NavItem from "./NavItem";
@@ -21,7 +22,7 @@ import {
   BagIcon,
 } from "../ui/icons";
 
-const WP_URL = (import.meta.env.VITE_WP_URL || "").replace(/\/+$/, "");
+const WP_URL = cleanUrl(import.meta.env.VITE_WP_URL);
 
 export default function Header() {
   const navigate = useNavigate();

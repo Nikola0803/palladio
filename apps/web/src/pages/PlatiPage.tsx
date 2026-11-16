@@ -9,9 +9,10 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import type { StripeExpressCheckoutElementConfirmEvent } from "@stripe/stripe-js";
+import { cleanUrl } from "../lib/env";
 
 const PK = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
-const CRM_URL = (import.meta.env.VITE_CRM_URL || "https://crm.palladio.hr").replace(/^﻿/, "").replace(/\/+$/, "");
+const CRM_URL = cleanUrl(import.meta.env.VITE_CRM_URL) || "https://crm.palladio.hr";
 
 const stripePromise = PK ? loadStripe(PK) : null;
 

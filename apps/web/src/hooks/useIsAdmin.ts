@@ -1,6 +1,7 @@
 import { useAsync } from "./useAsync";
+import { cleanUrl } from "../lib/env";
 
-const WP_URL = (import.meta.env.VITE_WP_URL || "").replace(/\/+$/, "");
+const WP_URL = cleanUrl(import.meta.env.VITE_WP_URL);
 
 async function checkIsAdmin(): Promise<boolean> {
   try {
