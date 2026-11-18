@@ -39,30 +39,42 @@ export default function MobileMenu({
           <Link to="/gold-silver" onClick={onClose} className="tracked-label px-5 py-4 border-b border-palladio-border block">
             Gold &amp; Silver
           </Link>
-          {topLevel.map((cat) => {
-            const children = childrenOf(cat.id);
-            return (
-              <div key={cat.id} className="border-b border-palladio-border">
-                <Link to={`/collection/${cat.slug}`} onClick={onClose} className="tracked-label px-5 py-4 block">
-                  {cat.name}
-                </Link>
-                {children.length > 0 && (
-                  <div className="pb-2">
-                    {children.map((child) => (
-                      <Link
-                        key={child.id}
-                        to={`/collection/${child.slug}`}
-                        onClick={onClose}
-                        className="block px-8 py-2 text-sm text-palladio-grey"
-                      >
-                        {child.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
+
+          {/* Jewellery — always shown; subcategories appear once categories load */}
+          <div className="border-b border-palladio-border">
+            <Link to="/jewellery" onClick={onClose} className="tracked-label px-5 py-4 block">
+              Jewellery
+            </Link>
+            {topLevel.filter((c) => !/grillz/i.test(c.name)).length > 0 && (
+              <div className="pb-2">
+                {topLevel.filter((c) => !/grillz/i.test(c.name)).map((cat) => (
+                  <Link
+                    key={cat.id}
+                    to={`/collection/${cat.slug}`}
+                    onClick={onClose}
+                    className="block px-8 py-2 text-sm text-palladio-grey"
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
               </div>
+            )}
+          </div>
+
+          {/* Grillz — always shown */}
+          {(() => {
+            const grillz = topLevel.find((c) => /grillz/i.test(c.name));
+            return (
+              <Link
+                to={grillz ? `/collection/${grillz.slug}` : "/collection/grillz"}
+                onClick={onClose}
+                className="tracked-label px-5 py-4 border-b border-palladio-border block"
+              >
+                Grillz
+              </Link>
             );
-          })}
+          })()}
+
           <Link to="/engagement-wedding" onClick={onClose} className="tracked-label px-5 py-4 border-b border-palladio-border block">
             Engagement &amp; Wedding
           </Link>

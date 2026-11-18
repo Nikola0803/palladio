@@ -184,32 +184,34 @@ export default function Header() {
           Gold &amp; Silver
         </Link>
 
-        {jewelleryTopLevel.length > 0 && (
-          <div onMouseEnter={openJewelleryMenu} onMouseLeave={scheduleCloseJewelleryMenu}>
-            <Link
-              to="/jewellery"
-              onClick={() => setJewelleryOpen(false)}
-              className={`tracked-label whitespace-nowrap ${jewelleryOpen ? "" : "hover:opacity-60"}`}
-              aria-haspopup="true"
-              aria-expanded={jewelleryOpen}
-              onFocus={openJewelleryMenu}
-            >
-              Jewellery
-            </Link>
-            {(
-              <MegaMenu
-                open={jewelleryOpen}
-                topLevel={jewelleryTopLevel}
-                onClose={() => setJewelleryOpen(false)}
-                onMouseEnter={openJewelleryMenu}
-                onMouseLeave={scheduleCloseJewelleryMenu}
-              />
-            )}
-          </div>
-        )}
+        <div onMouseEnter={openJewelleryMenu} onMouseLeave={scheduleCloseJewelleryMenu}>
+          <Link
+            to="/jewellery"
+            onClick={() => setJewelleryOpen(false)}
+            className={`tracked-label whitespace-nowrap ${jewelleryOpen ? "" : "hover:opacity-60"}`}
+            aria-haspopup="true"
+            aria-expanded={jewelleryOpen}
+            onFocus={openJewelleryMenu}
+          >
+            Jewellery
+          </Link>
+          {jewelleryTopLevel.length > 0 && (
+            <MegaMenu
+              open={jewelleryOpen}
+              topLevel={jewelleryTopLevel}
+              onClose={() => setJewelleryOpen(false)}
+              onMouseEnter={openJewelleryMenu}
+              onMouseLeave={scheduleCloseJewelleryMenu}
+            />
+          )}
+        </div>
 
-        {grillzCategory && (
+        {grillzCategory ? (
           <NavItem category={grillzCategory} children={childrenOf(grillzCategory.id)} />
+        ) : (
+          <Link to="/collection/grillz" className="tracked-label hover:opacity-60 whitespace-nowrap">
+            Grillz
+          </Link>
         )}
 
         <Link to="/engagement-wedding" className="tracked-label hover:opacity-60 whitespace-nowrap">
