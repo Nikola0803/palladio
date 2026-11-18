@@ -61,48 +61,56 @@ function mapProduct(r: typeof products.$inferSelect & { images?: string | null }
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const category = searchParams.get("category");
-  const q = searchParams.get("search") || searchParams.get("q");
-  const perPage = Math.min(parseInt(searchParams.get("per_page") || "24"), 100);
-  const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
-  const offset = (page - 1) * perPage;
-  const random = searchParams.get("random") === "1";
+  try {
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get("category");
+    const q = searchParams.get("search") || searchParams.get("q");
+    const perPage = Math.min(parseInt(searchParams.get("per_page") || "24"), 100);
+    const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+    const offset = (page - 1) * perPage;
+    const random = searchParams.get("random") === "1";
 
-  const conditions = [
-    isNull(products.parentId),
-    eq(products.published, true),
-  ];
+    const conditions = [
+      isNull(products.parentId),
+      eq(products.published, true),
+    ];
 
-  if (category) {
-    conditions.push(ilike(products.categories, `%${category}%`));
-  }
-  if (q) {
-    conditions.push(
-      or(
-        ilike(products.name, `%${q}%`),
-        ilike(products.categories, `%${q}%`),
-        ilike(products.description, `%${q}%`)
-      )!
+    if (category) {
+      conditions.push(ilike(products.categories, `%${category}%`));
+    }
+    if (q) {
+      conditions.push(
+        or(
+          ilike(products.name, `%${q}%`),
+          ilike(products.categories, `%${q}%`),
+          ilike(products.description, `%${q}%`)
+        )!
+      );
+    }
+
+    const where = and(...conditions);
+
+    const [countResult, rows] = await Promise.all([
+      db.select({ count: drizzleSql<number>`count(*)::int` }).from(products).where(where),
+      db.select().from(products).where(where)
+        .limit(perPage).offset(offset)
+        .orderBy(products.position, products.id),
+    ]);
+
+    const total = countResult[0]?.count ?? 0;
+    const items = rows.map(mapProduct);
+
+    if (random) items.sort(() => Math.random() - 0.5);
+
+    return NextResponse.json(
+      { items, total, page, per_page: perPage },
+      { headers: CORS }
+    );
+  } catch (err) {
+    console.error("catalog/products error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500, headers: CORS }
     );
   }
-
-  const where = and(...conditions);
-
-  const [countResult, rows] = await Promise.all([
-    db.select({ count: drizzleSql<number>`count(*)::int` }).from(products).where(where),
-    db.select().from(products).where(where)
-      .limit(perPage).offset(offset)
-      .orderBy(products.position, products.id),
-  ]);
-
-  const total = countResult[0]?.count ?? 0;
-  const items = rows.map(mapProduct);
-
-  if (random) items.sort(() => Math.random() - 0.5);
-
-  return NextResponse.json(
-    { items, total, page, per_page: perPage },
-    { headers: CORS }
-  );
 }

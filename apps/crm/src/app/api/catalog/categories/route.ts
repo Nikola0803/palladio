@@ -16,36 +16,44 @@ export async function OPTIONS() {
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const parentOnly = searchParams.get("parent_only") === "1";
+  try {
+    const { searchParams } = new URL(req.url);
+    const parentOnly = searchParams.get("parent_only") === "1";
 
-  // Pull all published parent products to extract unique categories
-  const rows = await db
-    .select({ categories: products.categories })
-    .from(products)
-    .where(eq(products.published, true));
+    // Pull all published parent products to extract unique categories
+    const rows = await db
+      .select({ categories: products.categories })
+      .from(products)
+      .where(eq(products.published, true));
 
-  // Count products per category
-  const counts = new Map<string, number>();
-  for (const row of rows) {
-    if (!row.categories) continue;
-    for (const cat of row.categories.split(",")) {
-      const name = cat.trim();
-      if (name) counts.set(name, (counts.get(name) || 0) + 1);
+    // Count products per category
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      if (!row.categories) continue;
+      for (const cat of row.categories.split(",")) {
+        const name = cat.trim();
+        if (name) counts.set(name, (counts.get(name) || 0) + 1);
+      }
     }
+
+    const categories = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count], i) => ({
+        id: i + 1,
+        name,
+        slug: name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        description: "",
+        count,
+        image: null,
+        parent: 0,
+      }));
+
+    return NextResponse.json(categories, { headers: CORS });
+  } catch (err) {
+    console.error("catalog/categories error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500, headers: CORS }
+    );
   }
-
-  const categories = Array.from(counts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, count], i) => ({
-      id: i + 1,
-      name,
-      slug: name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
-      description: "",
-      count,
-      image: null,
-      parent: 0,
-    }));
-
-  return NextResponse.json(categories, { headers: CORS });
 }
