@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAsync } from "../../hooks/useAsync";
 import { getCategories } from "../../lib/api";
-import { CART_EVENT, getCart } from "../../lib/store-api";
+import { CART_EVENT, getCartItems, cartCount as calcCartCount } from "../../lib/cart";
 import { useWishlist } from "../../lib/wishlist";
 import { cleanUrl } from "../../lib/env";
 import PalladioLogo from "../ui/PalladioLogo";
@@ -70,14 +70,8 @@ export default function Header() {
   // menu) — everything else feeds the Jewellery mega menu below.
   const grillzCategory = topLevel.find((c) => /grillz/i.test(c.name));
   const jewelleryTopLevel = topLevel.filter((c) => c.id !== grillzCategory?.id);
-  // Real cart item count from the WooCommerce Store API — no fabricated
-  // badge numbers. Silently stays at 0 if the cart endpoint can't be
-  // reached (e.g. still on local dev without a live cookie session).
   useEffect(() => {
-    const load = () =>
-      getCart()
-        .then((c) => setCartCount(c?.items_count ?? 0))
-        .catch(() => {});
+    const load = () => setCartCount(calcCartCount(getCartItems()));
     load();
     window.addEventListener(CART_EVENT, load);
     return () => window.removeEventListener(CART_EVENT, load);
@@ -184,32 +178,34 @@ export default function Header() {
           Gold &amp; Silver
         </Link>
 
-        {jewelleryTopLevel.length > 0 && (
-          <div onMouseEnter={openJewelleryMenu} onMouseLeave={scheduleCloseJewelleryMenu}>
-            <Link
-              to="/jewellery"
-              onClick={() => setJewelleryOpen(false)}
-              className={`tracked-label whitespace-nowrap ${jewelleryOpen ? "" : "hover:opacity-60"}`}
-              aria-haspopup="true"
-              aria-expanded={jewelleryOpen}
-              onFocus={openJewelleryMenu}
-            >
-              Jewellery
-            </Link>
-            {(
-              <MegaMenu
-                open={jewelleryOpen}
-                topLevel={jewelleryTopLevel}
-                onClose={() => setJewelleryOpen(false)}
-                onMouseEnter={openJewelleryMenu}
-                onMouseLeave={scheduleCloseJewelleryMenu}
-              />
-            )}
-          </div>
-        )}
+        <div onMouseEnter={openJewelleryMenu} onMouseLeave={scheduleCloseJewelleryMenu}>
+          <Link
+            to="/jewellery"
+            onClick={() => setJewelleryOpen(false)}
+            className={`tracked-label whitespace-nowrap ${jewelleryOpen ? "" : "hover:opacity-60"}`}
+            aria-haspopup="true"
+            aria-expanded={jewelleryOpen}
+            onFocus={openJewelleryMenu}
+          >
+            Jewellery
+          </Link>
+          {jewelleryTopLevel.length > 0 && (
+            <MegaMenu
+              open={jewelleryOpen}
+              topLevel={jewelleryTopLevel}
+              onClose={() => setJewelleryOpen(false)}
+              onMouseEnter={openJewelleryMenu}
+              onMouseLeave={scheduleCloseJewelleryMenu}
+            />
+          )}
+        </div>
 
-        {grillzCategory && (
+        {grillzCategory ? (
           <NavItem category={grillzCategory} children={childrenOf(grillzCategory.id)} />
+        ) : (
+          <Link to="/collection/grillz" className="tracked-label hover:opacity-60 whitespace-nowrap">
+            Grillz
+          </Link>
         )}
 
         <Link to="/engagement-wedding" className="tracked-label hover:opacity-60 whitespace-nowrap">

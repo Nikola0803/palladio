@@ -1,6 +1,7 @@
 import { getSvePostavke } from "@/lib/settings";
 import KonekcijaKartica from "@/components/KonekcijaKartica";
 import WooUvozDugme from "@/components/WooUvozDugme";
+import KatalogSinkronizacija from "@/components/KatalogSinkronizacija";
 import { Database, Check } from "lucide-react";
 
 export const revalidate = 0;
@@ -58,7 +59,12 @@ export default async function PostavkePage() {
             WOOCOMMERCE_CONSUMER_KEY: p.WOOCOMMERCE_CONSUMER_KEY,
             WOOCOMMERCE_CONSUMER_SECRET: p.WOOCOMMERCE_CONSUMER_SECRET,
           }}
-          dodatnoIspod={<WooUvozDugme />}
+          dodatnoIspod={
+            <>
+              <WooUvozDugme />
+              <KatalogSinkronizacija />
+            </>
+          }
         />
 
         <KonekcijaKartica

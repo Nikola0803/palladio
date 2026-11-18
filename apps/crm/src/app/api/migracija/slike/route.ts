@@ -3,6 +3,7 @@ import { put } from "@vercel/blob";
 import { eq, ilike, sql as drizzleSql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
+import { jwtVerify } from "jose";
 
 export const dynamic = "force-dynamic";
 // Safe on every Vercel plan (Hobby caps at 60s). The route is resumable, so
@@ -111,9 +112,19 @@ async function migrateOne(
   throw new Error(`${rawUrl}: ${lastErr}`);
 }
 
-export async function POST(req: NextRequest) {
+async function isAuthorised(req: NextRequest): Promise<boolean> {
   const authHeader = req.headers.get("authorization");
-  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
+  const token = req.cookies.get("crm_session")?.value;
+  const secret = process.env.AUTH_SECRET ? new TextEncoder().encode(process.env.AUTH_SECRET) : null;
+  if (token && secret) {
+    try { await jwtVerify(token, secret); return true; } catch {}
+  }
+  return false;
+}
+
+export async function POST(req: NextRequest) {
+  if (!(await isAuthorised(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

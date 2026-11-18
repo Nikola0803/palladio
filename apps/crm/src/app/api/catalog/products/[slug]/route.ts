@@ -60,22 +60,30 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const { slug } = params;
-  const idNum = parseInt(slug);
+  try {
+    const { slug } = params;
+    const idNum = parseInt(slug);
 
-  const [row] = await db
-    .select()
-    .from(products)
-    .where(
-      isNaN(idNum)
-        ? eq(products.slug, slug)
-        : or(eq(products.slug, slug), eq(products.id, idNum))!
-    )
-    .limit(1);
+    const [row] = await db
+      .select()
+      .from(products)
+      .where(
+        isNaN(idNum)
+          ? eq(products.slug, slug)
+          : or(eq(products.slug, slug), eq(products.id, idNum))!
+      )
+      .limit(1);
 
-  if (!row) {
-    return NextResponse.json({ error: "Not found" }, { status: 404, headers: CORS });
+    if (!row) {
+      return NextResponse.json({ error: "Not found" }, { status: 404, headers: CORS });
+    }
+
+    return NextResponse.json(mapProduct(row), { headers: CORS });
+  } catch (err) {
+    console.error("catalog/products/[slug] error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500, headers: CORS }
+    );
   }
-
-  return NextResponse.json(mapProduct(row), { headers: CORS });
 }

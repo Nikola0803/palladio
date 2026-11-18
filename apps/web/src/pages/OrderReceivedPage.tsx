@@ -1,10 +1,9 @@
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Breadcrumbs from "../components/ui/Breadcrumbs";
 
 export default function OrderReceivedPage() {
   const { orderId } = useParams<{ orderId: string }>();
-  const [params]    = useSearchParams();
-  const orderKey    = params.get("key") || "";
 
   return (
     <>
@@ -25,16 +24,6 @@ export default function OrderReceivedPage() {
             </p>
           )}
         </div>
-
-        {orderId && orderKey && (
-          <a
-            href={`${(import.meta.env.VITE_WP_URL || "").replace(/\/+$/, "")}/my-account/view-order/${orderId}/?key=${orderKey}`}
-            target="_blank" rel="noreferrer"
-            className="tracked-label text-[11px] underline underline-offset-4 hover:opacity-60 block mb-8"
-          >
-            View Order Details
-          </a>
-        )}
 
         <Link to="/" className="btn-solid">
           Continue Shopping

@@ -9,17 +9,14 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import Breadcrumbs from "../components/ui/Breadcrumbs";
-import { getCart } from "../lib/store-api";
+import { getCartItems, cartTotal, clearCart, type CartItem } from "../lib/cart";
 import { placeOrder, createPaymentIntent, type BillingAddress } from "../lib/checkout-api";
 
 const PK = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
 const stripePromise = PK ? loadStripe(PK) : null;
 
-function money(minor: string | number, unit: number, code: string) {
-  return (Number(minor) / 10 ** unit).toLocaleString(undefined, {
-    style: "currency",
-    currency: code,
-  });
+function money(amount: number) {
+  return amount.toLocaleString(undefined, { style: "currency", currency: "EUR" });
 }
 
 interface Fields {
@@ -52,21 +49,18 @@ function Field({
   );
 }
 
-type CartData = Awaited<ReturnType<typeof getCart>>;
-
-// ── PaymentElement form (needs Stripe context) ─────────────────────────────
 function CheckoutForm({ clientSecret }: { clientSecret: string }) {
   const stripe   = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
 
   const [fields, setFields] = useState<Fields>(EMPTY);
-  const [cart,   setCart]   = useState<CartData | null>(null);
+  const [items,  setItems]  = useState<CartItem[]>([]);
   const [busy,   setBusy]   = useState(false);
   const [error,  setError]  = useState("");
 
   useEffect(() => {
-    getCart().then(setCart).catch(() => setError("Greška učitavanja košarice."));
+    setItems(getCartItems());
   }, []);
 
   function change(name: keyof Fields, value: string) {
@@ -86,12 +80,11 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!stripe || !elements || !cart) return;
+    if (!stripe || !elements || items.length === 0) return;
 
     setError("");
     setBusy(true);
 
-    // Validate Stripe fields first
     const { error: submitErr } = await elements.submit();
     if (submitErr) {
       setError(submitErr.message || "Greška u podacima plaćanja.");
@@ -100,16 +93,19 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
     }
 
     try {
-      // 1. Kreiraj WC narudžbu
+      // Extract intent ID from client_secret (format: pi_xxx_secret_yyy)
+      const stripeIntentId = clientSecret.split("_secret_")[0];
+
+      // 1. Create CRM order
       const order = await placeOrder({
-        billing_address:  billing,
-        shipping_address: billing,
-        payment_method:   "palladio_stripe",
-        customer_note:    fields.note,
+        items,
+        billing,
+        stripeIntentId,
+        note: fields.note,
       });
 
-      // 2. Potvrdi plaćanje s PaymentElement
-      const returnUrl = `${window.location.origin}/order-received/${order.order_id}?key=${order.order_key}`;
+      // 2. Confirm Stripe payment
+      const returnUrl = `${window.location.origin}/order-received/${order.orderId}`;
       const { error: stripeErr } = await stripe.confirmPayment({
         elements,
         clientSecret,
@@ -134,16 +130,15 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
 
       if (stripeErr) throw new Error(stripeErr.message || "Stripe greška.");
 
-      navigate(`/order-received/${order.order_id}?key=${order.order_key}`);
+      clearCart();
+      navigate(`/order-received/${order.orderId}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Greška pri plaćanju.");
       setBusy(false);
     }
   }
 
-  const totalCents = cart ? Number(cart.totals.total_price) : 0;
-  const minorUnit  = cart?.totals.currency_minor_unit ?? 2;
-  const currCode   = cart?.totals.currency_code ?? "EUR";
+  const total = cartTotal(items);
 
   const paymentElementOptions: StripePaymentElementOptions = {
     layout: "tabs",
@@ -153,9 +148,7 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
         name:    `${fields.first_name} ${fields.last_name}`.trim() || undefined,
         email:   fields.email || undefined,
         phone:   fields.phone || undefined,
-        address: {
-          country: fields.country,
-        },
+        address: { country: fields.country },
       },
     },
   };
@@ -164,10 +157,8 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
     <form onSubmit={handleSubmit} noValidate>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 lg:gap-16">
 
-        {/* ── Left column ── */}
+        {/* Left column */}
         <div className="space-y-10">
-
-          {/* Contact */}
           <section>
             <h2 className="tracked-label text-[11px] mb-5 pb-3 border-b border-palladio-border">
               Contact Information
@@ -180,7 +171,6 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
             </div>
           </section>
 
-          {/* Shipping address */}
           <section>
             <h2 className="tracked-label text-[11px] mb-5 pb-3 border-b border-palladio-border">
               Shipping Address
@@ -214,7 +204,6 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
             </div>
           </section>
 
-          {/* Payment — Stripe PaymentElement handles everything */}
           <section>
             <h2 className="tracked-label text-[11px] mb-5 pb-3 border-b border-palladio-border">
               Payment
@@ -233,26 +222,26 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
           </section>
         </div>
 
-        {/* ── Right column: order summary ── */}
+        {/* Right column: order summary */}
         <aside className="self-start lg:sticky lg:top-32">
           <div className="bg-[#f6f5f2] p-6">
             <h2 className="tracked-label text-[11px] mb-5 pb-3 border-b border-palladio-border">
               Order Summary
             </h2>
 
-            {cart?.items.map((item: CartData["items"][0]) => (
-              <div key={item.key} className="flex justify-between text-sm mb-3 gap-3">
+            {items.map((item) => (
+              <div key={item.id} className="flex justify-between text-sm mb-3 gap-3">
                 <span className="text-palladio-grey leading-snug">
                   {item.name}
                   <span className="opacity-60 ml-1">× {item.quantity}</span>
                 </span>
                 <span className="shrink-0 font-medium">
-                  {money(item.totals.line_total, item.totals.currency_minor_unit, currCode)}
+                  {money(item.price * item.quantity)}
                 </span>
               </div>
             ))}
 
-            {!cart && (
+            {items.length === 0 && (
               <div className="space-y-2 mb-4">
                 {[1, 2].map((i) => (
                   <div key={i} className="h-4 bg-palladio-border/40 animate-pulse rounded" />
@@ -262,15 +251,13 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
 
             <div className="border-t border-palladio-border mt-5 pt-5 flex justify-between">
               <span className="tracked-label text-[11px]">Total</span>
-              <span className="font-medium">
-                {cart ? money(totalCents, minorUnit, currCode) : "—"}
-              </span>
+              <span className="font-medium">{money(total)}</span>
             </div>
             <p className="text-xs text-palladio-grey mt-1 mb-6">Taxes included. Shipping calculated at checkout.</p>
 
             <button
               type="submit"
-              disabled={busy || !stripe || !cart || cart.items.length === 0}
+              disabled={busy || !stripe || items.length === 0}
               className="btn-solid w-full disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {busy ? (
@@ -281,7 +268,7 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
                   </svg>
                   Processing…
                 </span>
-              ) : cart ? `Pay ${money(totalCents, minorUnit, currCode)}` : "Pay"}
+              ) : `Pay ${money(total)}`}
             </button>
 
             <p className="text-xs text-palladio-grey mt-4 text-center flex items-center justify-center gap-1.5">
@@ -298,20 +285,20 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
   );
 }
 
-// ── Outer wrapper: fetches PaymentIntent client_secret, then renders Elements ──
 export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [initError, setInitError] = useState("");
 
   useEffect(() => {
-    getCart()
-      .then(async (c) => {
-        const totalCents = Number(c.totals.total_price);
-        const currency   = c.totals.currency_code.toLowerCase();
-        if (totalCents < 50) return;
-        const { client_secret } = await createPaymentIntent(totalCents, currency, 0);
-        setClientSecret(client_secret);
-      })
+    const items = getCartItems();
+    const total = cartTotal(items);
+    const totalCents = Math.round(total * 100);
+    if (totalCents < 50) {
+      setInitError("Your bag is empty or total is too low.");
+      return;
+    }
+    createPaymentIntent(totalCents, "eur")
+      .then(({ client_secret }) => setClientSecret(client_secret))
       .catch(() => setInitError("Greška pri učitavanju checkout-a. Osvježi stranicu."));
   }, []);
 
@@ -331,7 +318,6 @@ export default function CheckoutPage() {
     );
   }
 
-
   return (
     <>
       <Breadcrumbs items={[
@@ -344,11 +330,10 @@ export default function CheckoutPage() {
         <h1 className="bv-title md:text-[22px] text-center mb-12">Checkout</h1>
 
         {!clientSecret ? (
-          /* Loading skeleton */
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 lg:gap-16">
             <div className="space-y-6">
               {[140, 220, 180].map((h, i) => (
-                <div key={i} className="h-[${h}px] bg-palladio-offwhite animate-pulse rounded" style={{ height: h }} />
+                <div key={i} className="bg-palladio-offwhite animate-pulse rounded" style={{ height: h }} />
               ))}
             </div>
             <div className="h-64 bg-palladio-offwhite animate-pulse rounded" />
@@ -362,40 +347,20 @@ export default function CheckoutPage() {
               appearance: {
                 theme: "stripe",
                 variables: {
-                  colorPrimary:       "#1a1a1a",
-                  colorBackground:    "#ffffff",
-                  colorText:          "#1a1a1a",
-                  colorDanger:        "#e53935",
-                  fontFamily:         "inherit",
-                  borderRadius:       "0px",
-                  spacingUnit:        "4px",
+                  colorPrimary:    "#1a1a1a",
+                  colorBackground: "#ffffff",
+                  colorText:       "#1a1a1a",
+                  colorDanger:     "#e53935",
+                  fontFamily:      "inherit",
+                  borderRadius:    "0px",
+                  spacingUnit:     "4px",
                 },
                 rules: {
-                  ".Input": {
-                    border:      "1px solid #d9d6cf",
-                    padding:     "10px 12px",
-                    fontSize:    "14px",
-                    boxShadow:   "none",
-                  },
-                  ".Input:focus": {
-                    border:    "1px solid #1a1a1a",
-                    boxShadow: "none",
-                    outline:   "none",
-                  },
-                  ".Label": {
-                    fontSize:      "11px",
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    color:         "#6b6b6b",
-                    marginBottom:  "4px",
-                  },
-                  ".Tab": {
-                    border:    "1px solid #d9d6cf",
-                    boxShadow: "none",
-                  },
-                  ".Tab--selected": {
-                    border: "1px solid #1a1a1a",
-                  },
+                  ".Input":        { border: "1px solid #d9d6cf", padding: "10px 12px", fontSize: "14px", boxShadow: "none" },
+                  ".Input:focus":  { border: "1px solid #1a1a1a", boxShadow: "none", outline: "none" },
+                  ".Label":        { fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", color: "#6b6b6b", marginBottom: "4px" },
+                  ".Tab":          { border: "1px solid #d9d6cf", boxShadow: "none" },
+                  ".Tab--selected":{ border: "1px solid #1a1a1a" },
                 },
               },
             }}
