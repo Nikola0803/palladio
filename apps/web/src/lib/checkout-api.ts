@@ -1,115 +1,52 @@
-/**
- * WooCommerce Store API — checkout flow
- * POST /wc/store/v1/checkout  (kreira order)
- * CRM API (Vercel Next.js) — kreira Stripe PaymentIntent za košaricu
- *
- * VITE_WP_URL  = https://palladio.hr  (WordPress backend)
- * VITE_CRM_URL = https://crm.palladio.hr  (Vercel CRM — samo za PaymentIntent)
- *
- * Ako je VITE_CRM_URL prazan, pada nazad na stari WordPress endpoint
- * (kompatibilnost za slučaj da CRM nije deployat).
- */
+import { crmUrl } from "./env";
+import type { CartItem } from "./cart";
 
-import { cleanUrl, crmUrl } from "./env";
-
-const WP_URL  = cleanUrl(import.meta.env.VITE_WP_URL);
 const CRM_URL = crmUrl(import.meta.env.VITE_CRM_URL);
-
-const STORE_BASE = `${WP_URL}/wp-json/wc/store/v1`;
 
 export interface BillingAddress {
   first_name: string;
   last_name: string;
-  company?: string;
-  address_1: string;
-  address_2?: string;
-  city: string;
-  state?: string;
-  postcode: string;
-  country: string;
   email: string;
   phone?: string;
+  address_1: string;
+  city: string;
+  postcode: string;
+  country: string;
 }
 
-export interface CheckoutPayload {
-  billing_address: BillingAddress;
-  shipping_address?: BillingAddress;
-  payment_method: string;
-  payment_data?: { key: string; value: string }[];
-  customer_note?: string;
+export interface OrderResult {
+  orderId: number;
 }
 
-export interface CheckoutResult {
-  order_id: number;
-  order_key: string;
-  redirect_url: string;
-  payment_result: {
-    payment_status: string;
-    payment_details: { key: string; value: string }[];
-    redirect_url?: string;
-  };
-}
-
-let _nonce: string | null = null;
-async function getStoreNonce(): Promise<string> {
-  if (_nonce) return _nonce;
-  const res = await fetch(`${STORE_BASE}/cart`, { credentials: "include" });
-  _nonce = res.headers.get("X-WC-Store-API-Nonce") || "";
-  return _nonce;
-}
-
-async function storeFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${STORE_BASE}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      "X-WC-Store-API-Nonce": await getStoreNonce(),
-      ...(options.headers || {}),
-    },
-  });
-  const body = await res.json();
-  if (!res.ok) throw new Error(body?.message || `Store API ${res.status}`);
-  return body;
-}
-
-export async function placeOrder(payload: CheckoutPayload): Promise<CheckoutResult> {
-  return storeFetch<CheckoutResult>("/checkout", {
+export async function placeOrder(payload: {
+  items: CartItem[];
+  billing: BillingAddress;
+  stripeIntentId: string;
+  note?: string;
+}): Promise<OrderResult> {
+  const url = `${CRM_URL}/api/narudzbe/checkout`;
+  const res = await fetch(url, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+  const data = await res.json();
+  if (!res.ok || !data.ok) throw new Error(data?.error || `Greška kreiranja narudžbe (${res.status})`);
+  return { orderId: data.orderId };
 }
 
-/**
- * Kreira Stripe PaymentIntent za cart checkout.
- * Koristi Vercel CRM API ako je VITE_CRM_URL postavljen,
- * inače stari WordPress endpoint (legacy).
- */
 export async function createPaymentIntent(
   amountCents: number,
   currency: string,
-  orderId: number
+  orderId?: number
 ): Promise<{ client_secret: string; intent_id?: string }> {
-  if (CRM_URL) {
-    // Nova ruta: Vercel CRM
-    const res = await fetch(`${CRM_URL}/api/stripe/cart-intent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: amountCents, currency, order_id: orderId }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || "Greška PaymentIntent");
-    return data;
-  }
-
-  // Stari WordPress endpoint (fallback)
-  const res = await fetch(`${WP_URL}/wp-json/palladio-stripe/v1/create-intent`, {
+  const url = `${CRM_URL}/api/stripe/cart-intent`;
+  const res = await fetch(url, {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ amount: amountCents, currency, order_id: orderId }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Greška PaymentIntent");
+  if (!res.ok) throw new Error(data?.error || "Greška PaymentIntent");
   return data;
 }

@@ -164,9 +164,15 @@ export const upiti = pgTable("upiti", {
 
 export const narudzbe = pgTable("narudzbe", {
   id: serial("id").primaryKey(),
-  wooOrderId: integer("woo_order_id").notNull().unique(),
+  wooOrderId: integer("woo_order_id").unique(),
   kupacIme: text("kupac_ime"),
   kupacEmail: text("kupac_email"),
+  kupacAdresa: text("kupac_adresa"),
+  kupacGrad: text("kupac_grad"),
+  kupacPostanski: text("kupac_postanski"),
+  kupacDrzava: text("kupac_drzava"),
+  kupacTelefon: text("kupac_telefon"),
+  stripeIntentId: text("stripe_intent_id"),
   iznos: real("iznos").notNull(),
   status: text("status").notNull(),
   datum: text("datum").notNull(),
@@ -180,6 +186,7 @@ export const narudzbaStavke = pgTable("narudzba_stavke", {
   proizvodId: integer("proizvod_id").references(() => gotoviProizvodi.id),
   naziv: text("naziv").notNull(),
   kolicina: integer("kolicina").notNull(),
+  cijena: real("cijena"),
 });
 
 export const dolazneFakture = pgTable("dolazne_fakture", {

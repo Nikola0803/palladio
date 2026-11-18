@@ -1,25 +1,41 @@
 import { useState } from "react";
-import { addToCart } from "../../lib/store-api";
+import { addItem } from "../../lib/cart";
 
 export default function AddToCartForm({
   productId,
+  slug,
+  name,
+  price,
+  image,
   inStock,
   variation,
 }: {
   productId: number;
+  slug: string;
+  name: string;
+  price: string;
+  image?: string;
   inStock: boolean;
   variation?: { attribute: string; value: string }[];
 }) {
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  async function handleAddToCart() {
+  function handleAddToCart() {
     setStatus("loading");
     try {
-      await addToCart(productId, quantity, variation);
+      addItem({
+        id: productId,
+        slug,
+        name,
+        price: parseFloat(price) || 0,
+        quantity,
+        image,
+        variation,
+      });
       setStatus("success");
-    } catch (err) {
-      console.error(err);
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch {
       setStatus("error");
     }
   }
@@ -49,15 +65,14 @@ export default function AddToCartForm({
         disabled={!inStock || status === "loading"}
         className="btn-solid w-full disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {!inStock ? "Out of Stock" : status === "loading" ? "Adding..." : status === "success" ? "Added to Bag" : "Add to Bag"}
+        {!inStock
+          ? "Out of Stock"
+          : status === "loading"
+          ? "Adding..."
+          : status === "success"
+          ? "Added to Bag ✓"
+          : "Add to Bag"}
       </button>
-
-      {status === "error" && (
-        <p className="text-xs text-red-600">
-          Couldn&apos;t reach the WooCommerce Store API. Confirm VITE_WP_URL is set and the site's
-          Store API is reachable (see .env.example).
-        </p>
-      )}
     </div>
   );
 }

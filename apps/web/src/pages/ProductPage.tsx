@@ -184,6 +184,10 @@ export default function ProductPage() {
           <div className="space-y-3">
             <AddToCartForm
               productId={product.id}
+              slug={product.slug}
+              name={product.name}
+              price={product.price || product.regular_price || "0"}
+              image={images[0]?.src}
               inStock={product.stock_status === "instock"}
               variation={variationPayload.length ? variationPayload : undefined}
             />

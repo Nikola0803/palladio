@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAsync } from "../../hooks/useAsync";
 import { getCategories } from "../../lib/api";
-import { CART_EVENT, getCart } from "../../lib/store-api";
+import { CART_EVENT, getCartItems, cartCount } from "../../lib/cart";
 import { useWishlist } from "../../lib/wishlist";
 import { cleanUrl } from "../../lib/env";
 import PalladioLogo from "../ui/PalladioLogo";
@@ -70,14 +70,8 @@ export default function Header() {
   // menu) — everything else feeds the Jewellery mega menu below.
   const grillzCategory = topLevel.find((c) => /grillz/i.test(c.name));
   const jewelleryTopLevel = topLevel.filter((c) => c.id !== grillzCategory?.id);
-  // Real cart item count from the WooCommerce Store API — no fabricated
-  // badge numbers. Silently stays at 0 if the cart endpoint can't be
-  // reached (e.g. still on local dev without a live cookie session).
   useEffect(() => {
-    const load = () =>
-      getCart()
-        .then((c) => setCartCount(c?.items_count ?? 0))
-        .catch(() => {});
+    const load = () => setCartCount(cartCount(getCartItems()));
     load();
     window.addEventListener(CART_EVENT, load);
     return () => window.removeEventListener(CART_EVENT, load);
