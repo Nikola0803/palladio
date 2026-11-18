@@ -15,7 +15,6 @@ export default function MobileMenu({
 }) {
   const isAdmin = useIsAdmin();
   const topLevel = categories.filter((c) => c.parent === 0);
-  const childrenOf = (parentId: number) => categories.filter((c) => c.parent === parentId);
 
   return (
     <div
