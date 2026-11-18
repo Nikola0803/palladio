@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAsync } from "../../hooks/useAsync";
 import { getCategories } from "../../lib/api";
-import { CART_EVENT, getCartItems, cartCount } from "../../lib/cart";
+import { CART_EVENT, getCartItems, cartCount as calcCartCount } from "../../lib/cart";
 import { useWishlist } from "../../lib/wishlist";
 import { cleanUrl } from "../../lib/env";
 import PalladioLogo from "../ui/PalladioLogo";
@@ -71,7 +71,7 @@ export default function Header() {
   const grillzCategory = topLevel.find((c) => /grillz/i.test(c.name));
   const jewelleryTopLevel = topLevel.filter((c) => c.id !== grillzCategory?.id);
   useEffect(() => {
-    const load = () => setCartCount(cartCount(getCartItems()));
+    const load = () => setCartCount(calcCartCount(getCartItems()));
     load();
     window.addEventListener(CART_EVENT, load);
     return () => window.removeEventListener(CART_EVENT, load);
