@@ -1,0 +1,360 @@
+<title>Hermes Dashboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* Layout: narrow sidebar + scrollable conversation feed */
+:root {
+  --bg:       #080812;
+  --surface:  #10102a;
+  --raise:    #17173a;
+  --border:   rgba(120,80,255,.14);
+  --accent:   #7c3aed;
+  --accent2:  #a78bfa;
+  --fg:       #e2e8f0;
+  --muted:    #7b80a0;
+  --dim:      #3d3f60;
+  --claude:   #a78bfa;
+  --deepseek: #38bdf8;
+  --gemini:   #34d399;
+  --warn:     #f59e0b;
+  --good:     #10b981;
+  --bad:      #ef4444;
+  font: 14px/1.6 'Inter', system-ui, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:      #f1f0fa;
+    --surface: #ffffff;
+    --raise:   #f8f7ff;
+    --border:  rgba(100,60,220,.12);
+    --accent:  #6d28d9;
+    --accent2: #7c3aed;
+    --fg:      #1e1b4b;
+    --muted:   #6b7280;
+    --dim:     #c4c3e0;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg:#f1f0fa;--surface:#ffffff;--raise:#f8f7ff;--border:rgba(100,60,220,.12);
+  --accent:#6d28d9;--accent2:#7c3aed;--fg:#1e1b4b;--muted:#6b7280;--dim:#c4c3e0;
+  color-scheme:light;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* Header */
+.hdr {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 max(16px, env(safe-area-inset-left,0px));
+  padding-right: max(16px, env(safe-area-inset-right,0px));
+  padding-block: 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.hdr-logo { font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700; letter-spacing:-.3px; }
+.hdr-logo span { color: var(--accent2); }
+.hdr-sub { font-size:12px; color:var(--muted); margin-top:1px; }
+.hdr-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.pulse-wrap { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--good); }
+.pulse { width:7px; height:7px; border-radius:50%; background:var(--good);
+  animation: beat 2s cubic-bezier(.4,0,.6,1) infinite; }
+@keyframes beat { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.45;transform:scale(.85)} }
+.theme-btn {
+  background: var(--raise); border:1px solid var(--border); border-radius:6px;
+  color:var(--muted); font-size:14px; padding:5px 8px; cursor:pointer;
+  transition: color .15s; font-family:inherit;
+}
+.theme-btn:hover { color:var(--fg); }
+
+/* Body layout */
+.layout { display:flex; flex:1; overflow:hidden; }
+
+/* Sidebar */
+.sidebar {
+  width: 240px; flex-shrink:0;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex; flex-direction:column; gap:14px;
+  padding-left: max(16px, env(safe-area-inset-left,0px));
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.card-title {
+  font-size: 10px; text-transform:uppercase; letter-spacing:.09em;
+  color: var(--muted); margin-bottom: 10px; font-weight:600;
+}
+.stat-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding: 5px 0; border-bottom:1px solid var(--border); font-size:13px;
+}
+.stat-row:last-child { border-bottom:none; }
+.stat-label { color:var(--muted); }
+.stat-val { font-weight:600; font-variant-numeric:tabular-nums; }
+.vc { color:var(--claude); }
+.vd { color:var(--deepseek); }
+.vg { color:var(--gemini); }
+.vw { color:var(--warn); }
+
+/* Provider bars */
+.bar-wrap { margin-top:4px; display:flex; flex-direction:column; gap:7px; }
+.bar-item { display:flex; flex-direction:column; gap:3px; font-size:12px; }
+.bar-label { display:flex; justify-content:space-between; color:var(--muted); }
+.bar-label span:last-child { font-variant-numeric:tabular-nums; }
+.bar-track { height:4px; background:var(--raise); border-radius:2px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:2px; transition:width .6s ease; }
+
+/* Model chip */
+.chip {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:500; padding:2px 8px;
+  border-radius:5px; vertical-align:middle;
+}
+.chip-claude { background:#7c3aed18; color:var(--claude); border:1px solid #7c3aed40; }
+.chip-deepseek { background:#0369a118; color:var(--deepseek); border:1px solid #0369a140; }
+.chip-gemini { background:#05966818; color:var(--gemini); border:1px solid #05966840; }
+.chip-user { background:#94a3b818; color:#94a3b8; border:1px solid #94a3b840; }
+.chip-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+/* Main area */
+.main { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; }
+.main-hdr {
+  font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+  padding-bottom:8px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.main-hdr span { color:var(--dim); font-weight:400; font-family:inherit; text-transform:none; letter-spacing:0; font-size:11px; }
+
+/* Message card */
+.msg {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:14px;
+  transition: border-color .15s;
+}
+.msg:hover { border-color: rgba(124,58,237,.3); }
+.msg-row { display:flex; align-items:center; gap:8px; margin-bottom:9px; flex-wrap:wrap; }
+.msg-time { margin-left:auto; font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums; }
+.user-bubble {
+  background: var(--raise); border-radius:7px; padding:8px 11px;
+  font-size:13px; color:var(--muted); margin-bottom:9px; line-height:1.5;
+}
+.msg-body { font-size:13px; line-height:1.75; color:var(--fg); white-space:pre-wrap; }
+.msg-body code {
+  font-family:'JetBrains Mono',monospace; font-size:12px;
+  background:var(--raise); padding:1px 5px; border-radius:4px; color:var(--accent2);
+}
+.msg-footer { margin-top:9px; display:flex; align-items:center; gap:10px; color:var(--muted); font-size:11px; font-variant-numeric:tabular-nums; }
+.cost-badge { margin-left:auto; }
+
+/* Route indicator */
+.route-info {
+  font-size:11px; color:var(--muted); margin-top:6px; padding-top:6px;
+  border-top:1px solid var(--border); display:flex; align-items:center; gap:6px;
+}
+.arrow { color:var(--dim); }
+
+/* Spend gauge */
+.gauge-wrap { margin-top:6px; }
+.gauge-track { height:6px; background:var(--raise); border-radius:3px; overflow:hidden; }
+.gauge-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.gauge-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:4px; font-variant-numeric:tabular-nums; }
+
+/* Responsive */
+@media (max-width:680px) {
+  .sidebar { width:100%; border-right:none; border-bottom:1px solid var(--border); overflow-y:visible; }
+  .layout { flex-direction:column; overflow:visible; }
+  body { overflow:auto; }
+}
+</style>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-logo">Hermes<span>.</span></div>
+    <div class="hdr-sub">personal AI agent</div>
+  </div>
+  <div class="hdr-right">
+    <div class="pulse-wrap">
+      <div class="pulse"></div>
+      online
+    </div>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">◑</button>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+
+    <div class="card">
+      <div class="card-title">Monthly Spend</div>
+      <div class="gauge-wrap">
+        <div class="gauge-track">
+          <div class="gauge-fill" style="width:3.4%"></div>
+        </div>
+        <div class="gauge-labels"><span>$0.68 used</span><span>$20.00 cap</span></div>
+      </div>
+      <div class="bar-wrap" style="margin-top:12px">
+        <div class="bar-item">
+          <div class="bar-label"><span class="vc">Claude</span><span>$0.63</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:93%;background:var(--claude)"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span class="vd">DeepSeek</span><span>$0.04</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:6%;background:var(--deepseek)"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span class="vg">Gemini</span><span>$0.00</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:1%;background:var(--gemini)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">This Month</div>
+      <div class="stat-row"><span class="stat-label">Messages</span><span class="stat-val">47</span></div>
+      <div class="stat-row"><span class="stat-label">via Claude</span><span class="stat-val vc">9</span></div>
+      <div class="stat-row"><span class="stat-label">via DeepSeek</span><span class="stat-val vd">35</span></div>
+      <div class="stat-row"><span class="stat-label">via Gemini</span><span class="stat-val vg">3</span></div>
+      <div class="stat-row"><span class="stat-label">Uptime</span><span class="stat-val" style="color:var(--good)">20d 4h</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">VPS</div>
+      <div class="stat-row"><span class="stat-label">Host</span><span class="stat-val" style="font-size:11px;font-family:'JetBrains Mono',monospace">srv1977265</span></div>
+      <div class="stat-row"><span class="stat-label">RAM</span><span class="stat-val vw">945 MB / 4 GB</span></div>
+      <div class="stat-row"><span class="stat-label">Disk</span><span class="stat-val">9.6 / 50 GB</span></div>
+      <div class="stat-row"><span class="stat-label">CPU</span><span class="stat-val">1.2%</span></div>
+    </div>
+
+  </aside>
+
+  <main class="main">
+    <div class="main-hdr">
+      Conversation Feed
+      <span>last 24 hours &middot; newest first</span>
+    </div>
+
+    <!-- Message 4 -->
+    <div class="msg">
+      <div class="msg-row">
+        <span class="chip chip-user"><span class="chip-dot"></span>you</span>
+        <span class="chip chip-claude"><span class="chip-dot"></span>claude</span>
+        <span class="msg-time">14:32</span>
+      </div>
+      <div class="user-bubble">/code write a Python function to parse ISINs and validate their checksum</div>
+      <div class="msg-body">Here's a clean ISIN parser with checksum validation:
+
+<code>def validate_isin(isin: str) -> bool:</code>
+    Validates an ISIN using the Luhn-like checksum algorithm.
+    Returns True if valid, False otherwise.
+
+The ISIN format is 2-letter country code + 9 alphanumeric chars + 1 check digit. Each letter is converted to its numeric value (A=10, B=11 ...) before running the Luhn algorithm over the full digit string.</div>
+      <div class="route-info">
+        <span class="chip chip-user" style="font-size:10px">trigger: /code</span>
+        <span class="arrow">→</span>
+        <span class="chip chip-claude" style="font-size:10px">routed to Claude</span>
+      </div>
+      <div class="msg-footer">
+        <span>614 + 892 tok</span>
+        <span class="cost-badge">$0.0152</span>
+      </div>
+    </div>
+
+    <!-- Message 3 -->
+    <div class="msg">
+      <div class="msg-row">
+        <span class="chip chip-user"><span class="chip-dot"></span>you</span>
+        <span class="chip chip-deepseek"><span class="chip-dot"></span>deepseek</span>
+        <span class="msg-time">11:14</span>
+      </div>
+      <div class="user-bubble">what's the capital of Serbia and what's the population?</div>
+      <div class="msg-body">Belgrade (Beograd) is the capital of Serbia, with a city population of around 1.7 million and a metro area of about 1.95 million people.</div>
+      <div class="route-info">
+        <span style="font-size:11px;color:var(--muted)">short message (8 words)</span>
+        <span class="arrow">→</span>
+        <span class="chip chip-deepseek" style="font-size:10px">routed to DeepSeek V3</span>
+      </div>
+      <div class="msg-footer">
+        <span>22 + 41 tok</span>
+        <span class="cost-badge">$0.000015</span>
+      </div>
+    </div>
+
+    <!-- Message 2 -->
+    <div class="msg">
+      <div class="msg-row">
+        <span class="chip chip-user"><span class="chip-dot"></span>you</span>
+        <span class="chip chip-deepseek"><span class="chip-dot"></span>deepseek</span>
+        <span class="msg-time">09:47</span>
+      </div>
+      <div class="user-bubble">remind me what i asked you yesterday about the VPS firewall</div>
+      <div class="msg-body">Yesterday you asked about configuring ufw on the VPS. We discussed allowing only port 22 inbound, with the plan to run <code>deploy/hardening.sh</code> once you have your SSH public key ready. No firewall is currently active on the server.</div>
+      <div class="route-info">
+        <span style="font-size:11px;color:var(--muted)">short message</span>
+        <span class="arrow">→</span>
+        <span class="chip chip-deepseek" style="font-size:10px">routed to DeepSeek V3</span>
+      </div>
+      <div class="msg-footer">
+        <span>187 + 68 tok</span>
+        <span class="cost-badge">$0.000045</span>
+      </div>
+    </div>
+
+    <!-- Message 1 (fallback example) -->
+    <div class="msg">
+      <div class="msg-row">
+        <span class="chip chip-user"><span class="chip-dot"></span>you</span>
+        <span class="chip chip-gemini"><span class="chip-dot"></span>gemini</span>
+        <span class="msg-time">08:03</span>
+      </div>
+      <div class="user-bubble">good morning, what's the weather like in London today?</div>
+      <div class="msg-body">Good morning! I don't have live weather data, but you can check weather.com or BBC Weather for London's current conditions. As of this morning London typically sees overcast skies with temperatures around 8-12°C in November.</div>
+      <div class="route-info">
+        <span style="font-size:11px;color:var(--warn)">DeepSeek rate limit hit</span>
+        <span class="arrow">→</span>
+        <span class="chip chip-gemini" style="font-size:10px">fallback to Gemini Flash</span>
+      </div>
+      <div class="msg-footer">
+        <span>18 + 55 tok</span>
+        <span class="cost-badge" style="color:var(--gemini)">free</span>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(function() {
+  var btn = document.getElementById('themeBtn');
+  var root = document.documentElement;
+  function applyTheme(t) {
+    if (t === 'dark') root.dataset.theme = 'dark';
+    else if (t === 'light') root.dataset.theme = 'light';
+    else delete root.dataset.theme;
+  }
+  var saved;
+  try { saved = localStorage.getItem('hermes-theme'); } catch(e){}
+  if (saved) applyTheme(saved);
+  btn.addEventListener('click', function() {
+    var cur = root.dataset.theme || 'system';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try { localStorage.setItem('hermes-theme', next); } catch(e){}
+  });
+})();
+</script>
