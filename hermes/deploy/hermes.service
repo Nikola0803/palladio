@@ -1,0 +1,34 @@
+[Unit]
+Description=Hermes Personal AI Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+Group=hermes
+WorkingDirectory=/opt/hermes
+ExecStart=/opt/hermes/venv/bin/python -m hermes.main
+Restart=always
+RestartSec=10
+
+Environment=HERMES_CONFIG=/etc/hermes/config.yaml
+Environment=PYTHONPATH=/opt/hermes/src
+Environment=PYTHONUNBUFFERED=1
+
+# Systemd sandboxing
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/hermes/.hermes
+PrivateTmp=true
+NoNewPrivileges=true
+CapabilityBoundingSet=
+SystemCallFilter=@system-service
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes
+
+[Install]
+WantedBy=multi-user.target

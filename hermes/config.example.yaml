@@ -1,0 +1,40 @@
+telegram:
+  bot_token: "YOUR_BOT_TOKEN_FROM_BOTFATHER"
+  owner_user_id: 123456789      # your numeric Telegram ID (get from @userinfobot)
+
+anthropic:
+  api_key: "sk-ant-..."
+  model: "claude-sonnet-4-5"
+  spend_cap_usd: 20.0           # hard monthly limit -- Claude calls stop if exceeded
+
+deepseek:
+  api_key: "sk-..."
+  model: "deepseek-chat"        # DeepSeek V3
+
+gemini:
+  api_key: "..."
+  model: "gemini-2.0-flash"     # free tier: 15 req/min, 1M tok/day
+
+router:
+  default_provider: "deepseek"
+  complex_provider: "claude"
+  free_fallback: "gemini"
+  short_message_max_tokens: 150  # messages under this -> deepseek
+  claude_trigger_prefixes:
+    - "/code"
+    - "/analyze"
+    - "/plan"
+    - "/think"
+    - "/research"
+
+database:
+  path: "/home/hermes/.hermes/hermes.db"
+
+dashboard:
+  host: "127.0.0.1"             # localhost only -- use SSH tunnel to access
+  port: 8080
+  secret_key: "CHANGE_THIS_RANDOM_STRING"
+
+server:
+  timezone: "Europe/London"
+  log_level: "INFO"

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hermes</title>
+<script src="https://unpkg.com/htmx.org@2.0.3"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d2e; --accent: #7c3aed;
+    --text: #e2e8f0; --muted: #64748b; --green: #10b981; --red: #ef4444;
+    --border: #2d3148;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.6 'Inter', system-ui, sans-serif; }
+  .header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .layout { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 57px); }
+  .sidebar { border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .card-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; }
+  .stat { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .stat:last-child { border-bottom: none; }
+  .stat-label { color: var(--muted); font-size: 13px; }
+  .stat-value { font-weight: 600; font-size: 13px; }
+  .cost-claude { color: #f59e0b; }
+  .cost-deepseek { color: #60a5fa; }
+  .cost-gemini { color: var(--green); }
+  .main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .msg-header { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .badge-in { background: #1d4ed820; color: #60a5fa; border: 1px solid #1d4ed8; }
+  .badge-claude { background: #7c3aed20; color: #a78bfa; border: 1px solid #7c3aed; }
+  .badge-deepseek { background: #0369a120; color: #38bdf8; border: 1px solid #0369a1; }
+  .badge-gemini { background: #05966820; color: #34d399; border: 1px solid #059668; }
+  .msg-time { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .msg-user { color: var(--muted); font-size: 13px; padding: 6px 10px; background: #ffffff08; border-radius: 4px; margin-bottom: 8px; }
+  .msg-reply { font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+  .msg-tokens { margin-top: 8px; font-size: 11px; color: var(--muted); }
+  .empty { text-align: center; color: var(--muted); padding: 60px 20px; }
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="dot"></div>
+  <h1>Hermes</h1>
+  <span style="color:var(--muted); font-size:13px; margin-left:4px">personal AI agent</span>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="card">
+      <div class="card-title">Monthly Spend</div>
+      {% set total = namespace(v=0) %}
+      {% for provider, cost in spend.items() %}
+        {% set total.v = total.v + cost %}
+        <div class="stat">
+          <span class="stat-label">{{ provider }}</span>
+          <span class="stat-value cost-{{ provider }}">${{ "%.4f"|format(cost) }}</span>
+        </div>
+      {% endfor %}
+      {% if spend %}
+        <div class="stat" style="margin-top:8px; border-top: 1px solid var(--border)">
+          <span class="stat-label" style="font-weight:600">Total</span>
+          <span class="stat-value">${{ "%.4f"|format(total.v) }}</span>
+        </div>
+      {% else %}
+        <div style="color:var(--muted); font-size:13px">No spend yet</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Messages</div>
+      <div class="stat">
+        <span class="stat-label">Total</span>
+        <span class="stat-value">{{ messages|length }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Claude</span>
+        <span class="stat-value cost-claude">{{ messages|selectattr("provider","equalto","claude")|list|length }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">DeepSeek</span>
+        <span class="stat-value cost-deepseek">{{ messages|selectattr("provider","equalto","deepseek")|list|length }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Gemini</span>
+        <span class="stat-value cost-gemini">{{ messages|selectattr("provider","equalto","gemini")|list|length }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main" hx-get="/api/messages" hx-trigger="every 10s" hx-swap="none">
+    {% if messages %}
+      {% for msg in messages %}
+      <div class="msg">
+        <div class="msg-header">
+          <span class="badge badge-in">user</span>
+          <span class="badge badge-{{ msg.provider or 'deepseek' }}">{{ msg.provider or '?' }}</span>
+          <span class="badge badge-{{ msg.provider or 'deepseek' }}">{{ msg.model or '' }}</span>
+          <span class="msg-time">{{ msg.created_at }}</span>
+        </div>
+        {% if msg.user_text %}
+          <div class="msg-user">{{ msg.user_text }}</div>
+        {% endif %}
+        <div class="msg-reply">{{ msg.agent_text or '' }}</div>
+        <div class="msg-tokens">
+          {{ msg.input_tok }}+{{ msg.output_tok }} tokens
+          {% if msg.cost_usd %}&nbsp;&middot;&nbsp;${{ "%.6f"|format(msg.cost_usd) }}{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No messages yet. Send something in Telegram!</div>
+    {% endif %}
+  </main>
+</div>
+
+</body>
+</html>
