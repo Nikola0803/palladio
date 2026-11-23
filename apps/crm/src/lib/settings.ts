@@ -10,6 +10,9 @@ const KEYS = [
   "WOOCOMMERCE_CONSUMER_SECRET",
   "GOLDPRICE_API_KEY",
   "BREVO_API_KEY",
+  "RESEND_API_KEY",
+  "EMAIL_FROM",
+  "EMAIL_BCC",
 ] as const;
 
 export type PostavkaKljuc = (typeof KEYS)[number];

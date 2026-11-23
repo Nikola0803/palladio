@@ -14,6 +14,7 @@ export async function GET() {
       token: paymentLinks.token,
       kupacId: paymentLinks.kupacId,
       kupacIme: paymentLinks.kupacIme,
+      kupacEmail: paymentLinks.kupacEmail,
       ime: kupci.ime,
       prezime: kupci.email,
       opis: paymentLinks.opis,
@@ -35,7 +36,7 @@ export async function GET() {
 // POST /api/payment-links — kreiraj novi
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { kupacIme, kupacId, opis, iznos, valuta, heroImage, napomena } = body;
+  const { kupacIme, kupacEmail, kupacId, opis, iznos, valuta, heroImage, napomena } = body;
 
   if (!iznos || isNaN(Number(iznos))) {
     return NextResponse.json({ error: "Iznos je obavezan." }, { status: 400 });
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       token,
       kupacId: kupacId || null,
       kupacIme: kupacIme || null,
+      kupacEmail: kupacEmail || null,
       opis: opis || null,
       iznos: Number(iznos),
       valuta: valuta || "EUR",

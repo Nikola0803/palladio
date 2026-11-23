@@ -234,6 +234,7 @@ export const paymentLinks = pgTable("payment_links", {
   token: text("token").notNull().unique(),
   kupacId: integer("kupac_id").references(() => kupci.id),
   kupacIme: text("kupac_ime"),
+  kupacEmail: text("kupac_email"),
   opis: text("opis"),
   iznos: real("iznos").notNull(),
   valuta: text("valuta").default("EUR"),
