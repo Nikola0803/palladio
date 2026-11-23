@@ -3,6 +3,7 @@ import { put } from "@vercel/blob";
 import { eq, ilike, sql as drizzleSql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
+import { readLegacyUpload } from "@/lib/legacy-media";
 
 export const dynamic = "force-dynamic";
 // Safe on every Vercel plan (Hobby caps at 60s). The route is resumable, so
@@ -71,8 +72,8 @@ function contentTypeFor(url: string, headerValue: string | null): string {
   }
 }
 
-// Download one WP image, trying the www. variant as a fallback. Returns the
-// new public Blob URL. Memoised across a single invocation via `cache`.
+// Download one WP image directly from the legacy host. Returns the new public
+// Blob URL. Memoised across a single invocation via `cache`.
 async function migrateOne(
   rawUrl: string,
   cache: Map<string, string>,
@@ -86,29 +87,21 @@ async function migrateOne(
     return rawUrl;
   }
 
-  const candidates = [rawUrl, rawUrl.replace(/^(https?:\/\/)palladio\.hr/i, "$1www.palladio.hr")];
-  let lastErr = "";
-  for (const candidate of candidates) {
-    try {
-      const resp = await fetch(candidate, { cache: "no-store" });
-      if (!resp.ok) {
-        lastErr = `HTTP ${resp.status}`;
-        continue;
-      }
-      const buf = await resp.arrayBuffer();
-      const { url } = await put(keyFromUrl(rawUrl), buf, {
-        access: "public",
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        contentType: contentTypeFor(rawUrl, resp.headers.get("content-type")),
-      });
-      cache.set(rawUrl, url);
-      return url;
-    } catch (e) {
-      lastErr = e instanceof Error ? e.message : "fetch/upload failed";
-    }
+  try {
+    const uploadPath = new URL(rawUrl).pathname.replace(/^\/wp-content\/uploads\//, "");
+    const source = await readLegacyUpload(uploadPath);
+    if (source.status < 200 || source.status >= 300) throw new Error(`HTTP ${source.status}`);
+    const { url } = await put(keyFromUrl(rawUrl), source.body, {
+      access: "public",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      contentType: contentTypeFor(rawUrl, source.contentType),
+    });
+    cache.set(rawUrl, url);
+    return url;
+  } catch (e) {
+    throw new Error(`${rawUrl}: ${e instanceof Error ? e.message : "fetch/upload failed"}`);
   }
-  throw new Error(`${rawUrl}: ${lastErr}`);
 }
 
 export async function POST(req: NextRequest) {
