@@ -36,6 +36,7 @@ export default function KatalogProizvodiTable({
               <th className="px-5 py-3 font-normal">Kategorije</th>
               <th className="px-5 py-3 font-normal">Cijena</th>
               <th className="px-5 py-3 font-normal">Status</th>
+              <th className="px-5 py-3 font-normal text-right">Akcija</th>
             </tr>
           </thead>
           <tbody>
@@ -57,6 +58,11 @@ export default function KatalogProizvodiTable({
                     <span className={`text-xs px-2 py-0.5 rounded-stamp border ${proizvod.published ? "border-moss/40 text-moss bg-moss/10" : "border-silver/40 text-silver"}`}>
                       {proizvod.published ? "Objavljeno" : "Skriveno"}
                     </span>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <Link href={`/proizvodi/${proizvod.id}`} className="text-xs font-medium text-gold hover:text-gold-light">
+                      Uredi
+                    </Link>
                   </td>
                 </tr>
               );
