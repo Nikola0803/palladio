@@ -17,6 +17,7 @@ type PaymentLink = {
   kreirano: string | null;
   placenoAt: string | null;
 };
+type CatalogProduct = { id: number; name: string; regularPrice: number | null; salePrice: number | null };
 
 const STATUS_STYLE: Record<string, string> = {
   aktivan:  "border-moss/40 text-moss bg-moss/10",
@@ -44,8 +45,10 @@ const BASE_URL = (process.env.NEXT_PUBLIC_WEB_URL || "https://www.palladio.hr").
 
 export default function PaymentLinksClient({
   pocetniLinkovi,
+  katalog,
 }: {
   pocetniLinkovi: PaymentLink[];
+  katalog: CatalogProduct[];
 }) {
   const [linkovi, setLinkovi] = useState(pocetniLinkovi);
   const [formaOtvorena, setFormaOtvorena] = useState(false);
@@ -59,10 +62,13 @@ export default function PaymentLinksClient({
     valuta: "EUR",
     napomena: "",
     heroImage: "",
+    stavke: [] as { productId?: number; name: string; quantity: number; unitPrice: number }[],
+    rucniUkupno: true,
   });
 
   async function kreirajLink() {
-    if (!novi.iznos || isNaN(Number(novi.iznos))) return;
+    if (novi.rucniUkupno && (!novi.iznos || isNaN(Number(novi.iznos)))) return;
+    if (!novi.rucniUkupno && !novi.stavke.length) return;
     setBusy(-1);
     const res = await fetch("/api/payment-links", {
       method: "POST",
@@ -75,13 +81,15 @@ export default function PaymentLinksClient({
         valuta:    novi.valuta,
         napomena:  novi.napomena || null,
         heroImage: novi.heroImage || null,
+        stavke: novi.stavke,
+        rucniUkupno: novi.rucniUkupno,
       }),
     });
     if (res.ok) {
       const { paymentLink } = await res.json();
       setLinkovi((l) => [paymentLink, ...l]);
       setFormaOtvorena(false);
-      setNovi({ kupacIme: "", kupacEmail: "", opis: "", iznos: "", valuta: "EUR", napomena: "", heroImage: "" });
+      setNovi({ kupacIme: "", kupacEmail: "", opis: "", iznos: "", valuta: "EUR", napomena: "", heroImage: "", stavke: [], rucniUkupno: true });
     }
     setBusy(null);
   }
@@ -192,6 +200,9 @@ export default function PaymentLinksClient({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2 rounded border border-ink-700 bg-ink-800/60 p-3">
+              <label className="flex items-center gap-2 text-sm text-ink-100"><input type="checkbox" checked={!novi.rucniUkupno} onChange={(e) => setNovi((n) => ({ ...n, rucniUkupno: !e.target.checked }))} /> Naplati odabrane proizvode / stavke</label>
+              {!novi.rucniUkupno && <><div className="mt-3 flex gap-2"><select className="min-w-0 flex-1 bg-ink-900 border border-ink-600 px-3 py-2 text-sm" defaultValue="" onChange={(e) => { const product = katalog.find((p) => p.id === Number(e.target.value)); if (product) { setNovi((n) => ({ ...n, stavke: [...n.stavke, { productId: product.id, name: product.name, quantity: 1, unitPrice: product.salePrice || product.regularPrice || 0 }] })); e.currentTarget.value = ""; } }}><option value="">Odaberi proizvod…</option>{katalog.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select><button type="button" className="border border-ink-600 px-3 text-sm" onClick={() => setNovi((n) => ({ ...n, stavke: [...n.stavke, { name: "Ručna stavka", quantity: 1, unitPrice: 0 }] }))}>+ Ručno</button></div><div className="mt-3 space-y-2">{novi.stavke.map((item, index) => <div key={index} className="flex gap-2"><input value={item.name} onChange={(e) => setNovi((n) => ({ ...n, stavke: n.stavke.map((x, i) => i === index ? { ...x, name: e.target.value } : x) }))} className="flex-1 bg-ink-900 border border-ink-600 px-2 py-1 text-sm" /><input type="number" min="1" value={item.quantity} onChange={(e) => setNovi((n) => ({ ...n, stavke: n.stavke.map((x, i) => i === index ? { ...x, quantity: Number(e.target.value) || 1 } : x) }))} className="w-16 bg-ink-900 border border-ink-600 px-2 py-1 text-sm" /><input type="number" step="0.01" value={item.unitPrice} onChange={(e) => setNovi((n) => ({ ...n, stavke: n.stavke.map((x, i) => i === index ? { ...x, unitPrice: Number(e.target.value) || 0 } : x) }))} className="w-24 bg-ink-900 border border-ink-600 px-2 py-1 text-sm" /><button type="button" onClick={() => setNovi((n) => ({ ...n, stavke: n.stavke.filter((_, i) => i !== index) }))}>×</button></div>)}</div><p className="mt-3 text-xs text-gold">Ukupno: {money(novi.stavke.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0), novi.valuta)}</p></>}</div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-silver uppercase tracking-wider">Iznos *</label>
               <div className="flex gap-2">

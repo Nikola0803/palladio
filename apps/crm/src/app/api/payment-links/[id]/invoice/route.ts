@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { paymentLinks, kupci } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { paymentLinkMeta } from "@/lib/payment-link-items";
 
 export const dynamic = "force-dynamic";
 
@@ -43,8 +44,8 @@ export async function GET(
     maximumFractionDigits: 2,
   });
 
-  // Parsiraj stavke iz opis polja
-  const rawItems = (row.opis || "")
+  const metaItems = paymentLinkMeta(row.napomena).items;
+  const rawItems = metaItems.length ? metaItems.map((item) => `${item.name} × ${item.quantity} — ${(item.unitPrice * item.quantity).toFixed(2)} €`) : (row.opis || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);

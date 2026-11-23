@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { paymentLinks, kupci } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { serializePaymentLinkMeta, type PaymentLinkItem } from "@/lib/payment-link-items";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +37,15 @@ export async function GET() {
 // POST /api/payment-links — kreiraj novi
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { kupacIme, kupacEmail, kupacId, opis, iznos, valuta, heroImage, napomena } = body;
+  const { kupacIme, kupacEmail, kupacId, opis, iznos, valuta, heroImage, napomena, stavke, rucniUkupno } = body;
 
-  if (!iznos || isNaN(Number(iznos))) {
-    return NextResponse.json({ error: "Iznos je obavezan." }, { status: 400 });
-  }
-
+  const items: PaymentLinkItem[] = Array.isArray(stavke) ? stavke.map((item) => ({
+    productId: Number.isInteger(Number(item.productId)) ? Number(item.productId) : undefined,
+    name: String(item.name || "").trim(), quantity: Math.max(1, Number(item.quantity) || 1), unitPrice: Math.max(0, Number(item.unitPrice) || 0),
+  })).filter((item) => item.name) : [];
+  const calculatedTotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const total = rucniUkupno || !items.length ? Number(iznos) : calculatedTotal;
+  if (!total || total < 0.5) return NextResponse.json({ error: "Iznos je obavezan." }, { status: 400 });
   const token = randomUUID();
   const [row] = await db
     .insert(paymentLinks)
@@ -51,10 +55,10 @@ export async function POST(req: NextRequest) {
       kupacIme: kupacIme || null,
       kupacEmail: kupacEmail || null,
       opis: opis || null,
-      iznos: Number(iznos),
+      iznos: total,
       valuta: valuta || "EUR",
       heroImage: heroImage || null,
-      napomena: napomena || null,
+      napomena: serializePaymentLinkMeta({ note: napomena || "", items, manualTotal: Boolean(rucniUkupno) }),
       status: "aktivan",
     })
     .returning();

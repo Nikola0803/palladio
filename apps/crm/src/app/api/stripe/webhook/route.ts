@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { paymentLinks } from "@/lib/db/schema";
+import { paymentLinks, kupci, narudzbe, narudzbaStavke } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSvePostavke } from "@/lib/settings";
 import { wooOznaciNarudzbuPlacenom } from "@/lib/woocommerce";
+import { paymentLinkMeta } from "@/lib/payment-link-items";
 
 export const dynamic = "force-dynamic";
 
@@ -44,10 +45,30 @@ export async function POST(req: NextRequest) {
     const pi = event.data.object as { id?: string; metadata?: { payment_link_id?: string; order_id?: string } };
     const linkId = pi.metadata?.payment_link_id;
     if (linkId) {
+      const [link] = await db.select().from(paymentLinks).where(eq(paymentLinks.id, Number(linkId))).limit(1);
       await db
         .update(paymentLinks)
         .set({ status: "placen", placenoAt: new Date(), azurirano: new Date() })
         .where(eq(paymentLinks.id, Number(linkId)));
+      if (link) {
+        let customerId = link.kupacId;
+        if (!customerId && link.kupacEmail) {
+          const [customer] = await db.insert(kupci).values({
+            ime: link.kupacIme || link.kupacEmail, email: link.kupacEmail, kreiran: new Date().toISOString(),
+          }).onConflictDoUpdate({ target: kupci.email, set: { ime: link.kupacIme || link.kupacEmail } }).returning();
+          customerId = customer.id;
+          await db.update(paymentLinks).set({ kupacId: customerId }).where(eq(paymentLinks.id, link.id));
+        }
+        const externalOrderId = -link.id;
+        const [existingOrder] = await db.select().from(narudzbe).where(eq(narudzbe.wooOrderId, externalOrderId)).limit(1);
+        const [order] = await db.insert(narudzbe).values({
+          wooOrderId: externalOrderId, kupacIme: link.kupacIme, kupacEmail: link.kupacEmail, iznos: link.iznos,
+          status: "zavrseno", datum: new Date().toISOString(), napomena: `Payment link #${link.id}`,
+        }).onConflictDoUpdate({ target: narudzbe.wooOrderId, set: { status: "zavrseno", iznos: link.iznos } }).returning();
+        if (!existingOrder) for (const item of paymentLinkMeta(link.napomena).items) {
+          await db.insert(narudzbaStavke).values({ narudzbaId: order.id, wooProductId: item.productId || null, naziv: item.name, kolicina: item.quantity });
+        }
+      }
     }
 
     const orderId = Number(pi.metadata?.order_id);
