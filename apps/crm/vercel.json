@@ -6,7 +6,7 @@
   "crons": [
     {
       "path": "/api/cron/gold-price",
-      "schedule": "17 3 * * *"
+      "schedule": "17 */4 * * *"
     }
   ]
 }

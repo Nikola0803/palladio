@@ -15,13 +15,16 @@ function parseImages(images: string | null) {
   }
 }
 
-export default function ProductEditor({ product }: { product: Product }) {
+type GoldPrice = { vrijeme: string; cijenaEurPoGramu585: number | null; cijenaEurPoGramu750: number | null; cijenaEurPoGramu925: number | null };
+
+export default function ProductEditor({ product, goldPrice }: { product: Product; goldPrice: GoldPrice | null }) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: product.name, slug: product.slug || "", sku: product.sku || "",
     shortDescription: product.shortDescription || "", description: product.description || "",
     categories: product.categories || "", regularPrice: product.regularPrice?.toString() || "",
     salePrice: product.salePrice?.toString() || "", published: product.published ?? true,
+    metalPurity: product.metalPurity || "585", totalWeight: product.totalWeight || "",
     images: parseImages(product.images).join("\n"),
   });
   const [saving, setSaving] = useState(false);
@@ -29,6 +32,8 @@ export default function ProductEditor({ product }: { product: Product }) {
   const set = (field: keyof typeof form, value: string | boolean) => setForm((current) => ({ ...current, [field]: value }));
   const input = "mt-1 w-full rounded-md border border-ink-600 bg-ink-900 px-3 py-2 text-sm text-ink-100 outline-none focus:border-gold";
   const label = "block text-sm font-medium text-ink-200";
+  const goldPerGram = form.metalPurity === "925" ? goldPrice?.cijenaEurPoGramu925 : form.metalPurity === "750" ? goldPrice?.cijenaEurPoGramu750 : goldPrice?.cijenaEurPoGramu585;
+  const metalValue = goldPerGram && Number(form.totalWeight) > 0 ? goldPerGram * Number(form.totalWeight) : null;
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -62,6 +67,7 @@ export default function ProductEditor({ product }: { product: Product }) {
         <p className="text-sm text-ink-400">Ostavi akcijsku cijenu praznom ako proizvod nije na akciji.</p>
       </section>
     </div>
+    <section className="mt-6 space-y-4 rounded-md border border-gold/30 bg-gold/5 p-5 shadow-card"><h2 className="font-display text-xl text-ink-100">Kalkulacija zlata</h2><p className="text-sm text-ink-400">Primjer: 12,5 g · čistoća 585 · trenutna tržišna cijena za 1 g = vrijednost metala. Zatim ručno postavi prodajnu cijenu s radom i maržom.</p><div className="grid gap-4 sm:grid-cols-2"><label className={label}>Čistoća<select value={form.metalPurity} onChange={(e) => set("metalPurity", e.target.value)} className={input}><option value="585">585 (14k / 58,5%)</option><option value="750">750 (18k / 75%)</option><option value="925">925 (sterling srebro)</option></select></label><label className={label}>Gramaža<input inputMode="decimal" placeholder="npr. 12.5" value={form.totalWeight} onChange={(e) => set("totalWeight", e.target.value)} className={input} /></label></div>{goldPerGram ? <div className="rounded bg-ink-900/60 px-4 py-3 text-sm text-ink-100">Tržišna cijena: <strong>€{goldPerGram.toFixed(2)} / g</strong>{goldPrice && <span className="ml-2 text-ink-400">(ažurirano {new Date(goldPrice.vrijeme).toLocaleString("hr-HR")})</span>} {metalValue && <><br />Vrijednost metala: <strong>€{metalValue.toFixed(2)}</strong> <button type="button" onClick={() => set("regularPrice", metalValue.toFixed(2))} className="ml-3 text-xs text-gold underline">Preuzmi kao redovnu cijenu</button></>}</div> : <p className="text-sm text-rose">Nema spremljene tržišne cijene — provjeri Goldprice API u Postavkama.</p>}</section>
     <section className="mt-6 space-y-5 rounded-md border border-ink-700 bg-ink-800 p-5 shadow-card"><h2 className="font-display text-xl text-ink-100">Opis</h2><label className={label}>Kratki opis<textarea value={form.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} rows={3} className={input} /></label><label className={label}>Puni opis<textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={10} className={input} /></label></section>
     <section className="mt-6 space-y-3 rounded-md border border-ink-700 bg-ink-800 p-5 shadow-card"><h2 className="font-display text-xl text-ink-100">Slike</h2><p className="text-sm text-ink-400">Jedan URL slike po retku. Prva slika je glavna slika proizvoda.</p><textarea value={form.images} onChange={(e) => set("images", e.target.value)} rows={8} className={input} placeholder="https://…" /><div className="flex flex-wrap gap-3">{form.images.split(/\r?\n/).map((url) => url.trim()).filter(Boolean).map((url) => <img key={url} src={url} alt="Pregled proizvoda" className="h-20 w-20 rounded object-cover bg-ink-900" />)}</div></section>
   </form>;

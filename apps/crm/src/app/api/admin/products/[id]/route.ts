@@ -45,6 +45,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     categories: optionalText(body.categories),
     regularPrice: optionalNumber(body.regularPrice),
     salePrice: optionalNumber(body.salePrice),
+    metalPurity: optionalText(body.metalPurity),
+    totalWeight: optionalText(body.totalWeight),
     published: body.published === true,
     images: JSON.stringify(images),
   }).where(eq(products.id, id)).returning();
