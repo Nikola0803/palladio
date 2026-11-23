@@ -1,13 +1,13 @@
-import { request } from "http";
+import { request } from "https";
 
 const HOSTINGER_IP = "91.234.46.99";
 const WORDPRESS_HOST = "palladio.hr";
 
 /**
  * Read an old WordPress upload directly from the Hostinger virtual host.
- * Node's fetch does not reliably preserve a custom Host header on Vercel;
- * http.request does, which lets this keep working after the public domain
- * is pointed at the storefront.
+ * The public domain now resolves to Vercel, so the request uses the original
+ * TLS host name with a pinned DNS lookup to the Hostinger origin. This keeps
+ * SNI/Host correct without relying on a custom Host header being forwarded.
  */
 export function readLegacyUpload(uploadPath: string): Promise<{
   body: Buffer;
@@ -23,11 +23,12 @@ export function readLegacyUpload(uploadPath: string): Promise<{
   return new Promise((resolve, reject) => {
     const upstream = request(
       {
-        hostname: HOSTINGER_IP,
-        port: 80,
+        hostname: WORDPRESS_HOST,
+        port: 443,
         method: "GET",
         path: `/wp-content/uploads/${safePath}`,
-        headers: { Host: WORDPRESS_HOST },
+        servername: WORDPRESS_HOST,
+        lookup: (_hostname, _options, callback) => callback(null, HOSTINGER_IP, 4),
       },
       (response) => {
         const chunks: Buffer[] = [];
