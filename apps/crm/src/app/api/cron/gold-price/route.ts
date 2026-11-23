@@ -3,6 +3,8 @@ import { fetchGoldPrice } from "@/lib/gold-price";
 import { db } from "@/lib/db";
 import { cijenaZlataPovijest } from "@/lib/db/schema";
 import { getPostavka } from "@/lib/settings";
+import { repriceConfiguredCatalog } from "@/lib/gold-repricing";
+import { wooAzurirajCijenuProizvoda } from "@/lib/woocommerce";
 
 export const dynamic = "force-dynamic";
 
@@ -25,5 +27,19 @@ export async function GET(req: NextRequest) {
     cijenaEurPoGramu585: price.eurPoGramu585,
   });
 
-  return NextResponse.json({ ok: true, price });
+  const changed = await repriceConfiguredCatalog(price);
+  const settings = await getPostavka("WC_SITE_URL").then(async (siteUrl) => ({
+    siteUrl: siteUrl || await getPostavka("WP_SITE_URL"),
+    consumerKey: await getPostavka("WOOCOMMERCE_CONSUMER_KEY"),
+    consumerSecret: await getPostavka("WOOCOMMERCE_CONSUMER_SECRET"),
+  }));
+  if (settings.siteUrl && settings.consumerKey && settings.consumerSecret) {
+    for (const product of changed) {
+      // A deleted/variable Woo product must not stop price updates for every
+      // other configured product.
+      await wooAzurirajCijenuProizvoda(settings, product.id, product.price).catch(() => null);
+    }
+  }
+
+  return NextResponse.json({ ok: true, price, repriced: changed.length });
 }

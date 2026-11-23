@@ -48,3 +48,11 @@ export async function wooOznaciNarudzbuPlacenom(kred: WooKredencijali, orderId: 
     body: JSON.stringify({ status: "processing", transaction_id: transactionId }),
   });
 }
+
+export async function wooAzurirajCijenuProizvoda(kred: WooKredencijali, productId: number, price: number) {
+  return wooFetch(kred, `products/${productId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ regular_price: price.toFixed(2), sale_price: "" }),
+  });
+}
