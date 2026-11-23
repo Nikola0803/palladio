@@ -19,6 +19,7 @@ const PUBLIC_PATHS = [
   "/api/products",
   "/api/catalog/",
   "/api/blog/",
+  "/api/wp-image",
   "/plati/",
 ];
 
