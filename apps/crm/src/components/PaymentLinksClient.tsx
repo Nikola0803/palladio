@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Copy, Check, FileText, Ban, Link2, Send } from "lucide-react";
+import { Plus, X, Copy, Check, FileText, Ban, Link2, Send, Mail } from "lucide-react";
 
 type PaymentLink = {
   id: number;
@@ -105,6 +105,34 @@ export default function PaymentLinksClient({
         alert(`Email poslat na ${email}`);
       } else {
         alert(`Greška pri slanju: ${data.error || res.status}`);
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function posaljiFakturu(link: PaymentLink) {
+    let email = (link.kupacEmail || "").trim();
+    if (!email) {
+      email = (prompt("Email kupca za slanje fakture:") || "").trim();
+      if (!email) return;
+    }
+
+    setBusy(link.id);
+    try {
+      const res = await fetch(`/api/payment-links/${link.id}/invoice/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setLinkovi((links) => links.map((item) => (
+          item.id === link.id ? { ...item, kupacEmail: email } : item
+        )));
+        alert(`Faktura je poslana na ${email}. Kopija je poslana na info@palladio.hr.`);
+      } else {
+        alert(`Greška pri slanju fakture: ${data.error || res.status}`);
       }
     } finally {
       setBusy(null);
@@ -366,6 +394,18 @@ export default function PaymentLinksClient({
                       >
                         <FileText className="w-4 h-4" />
                       </button>
+
+                      {/* Pošalji plaćenu fakturu kupcu i trgovini */}
+                      {link.status === "placen" && (
+                        <button
+                          onClick={() => posaljiFakturu(link)}
+                          disabled={busy === link.id}
+                          title="Pošalji fakturu emailom"
+                          className="p-1.5 rounded text-silver hover:text-gold hover:bg-ink-700 transition disabled:opacity-40"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </button>
+                      )}
 
                       {/* Opozovi */}
                       {link.status === "aktivan" && (

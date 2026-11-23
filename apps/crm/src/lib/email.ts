@@ -13,6 +13,10 @@ export type SendEmailInput = {
   html: string;
   bcc?: string | string[];
   replyTo?: string;
+  attachments?: Array<{
+    filename: string;
+    content: string;
+  }>;
 };
 
 export async function sendEmail(input: SendEmailInput): Promise<{ id?: string }> {
@@ -39,6 +43,7 @@ export async function sendEmail(input: SendEmailInput): Promise<{ id?: string }>
       html: input.html,
       ...(bcc ? { bcc } : {}),
       ...(input.replyTo ? { reply_to: input.replyTo } : {}),
+      ...(input.attachments ? { attachments: input.attachments } : {}),
     }),
   });
 
