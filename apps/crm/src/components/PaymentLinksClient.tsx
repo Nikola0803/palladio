@@ -395,18 +395,16 @@ export default function PaymentLinksClient({
                         <FileText className="w-4 h-4" />
                       </button>
 
-                      {/* Pošalji plaćenu fakturu kupcu i trgovini */}
-                      {link.status === "placen" && (
-                        <button
-                          onClick={() => posaljiFakturu(link)}
-                          disabled={busy === link.id}
-                          title="Pošalji fakturu emailom kupcu i info@palladio.hr"
-                          className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-gold border border-gold/40 hover:bg-gold/10 transition disabled:opacity-40"
-                        >
-                          <Mail className="w-4 h-4" />
-                          Pošalji fakturu
-                        </button>
-                      )}
+                      {/* Pošalji fakturu kupcu i trgovini */}
+                      <button
+                        onClick={() => posaljiFakturu(link)}
+                        disabled={busy === link.id}
+                        title="Pošalji fakturu emailom kupcu i info@palladio.hr"
+                        className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-gold border border-gold/40 hover:bg-gold/10 transition disabled:opacity-40"
+                      >
+                        <Mail className="w-4 h-4" />
+                        Pošalji fakturu
+                      </button>
 
                       {/* Opozovi */}
                       {link.status === "aktivan" && (
