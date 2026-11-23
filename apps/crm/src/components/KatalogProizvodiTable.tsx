@@ -1,4 +1,5 @@
 import { products } from "@/lib/db/schema";
+import Link from "next/link";
 
 type KatalogProizvod = typeof products.$inferSelect;
 
@@ -13,7 +14,17 @@ function firstImage(images: string | null) {
   }
 }
 
-export default function KatalogProizvodiTable({ proizvodi }: { proizvodi: KatalogProizvod[] }) {
+export default function KatalogProizvodiTable({
+  proizvodi,
+  trenutnaStranica,
+  ukupnoStranica,
+  ukupnoProizvoda,
+}: {
+  proizvodi: KatalogProizvod[];
+  trenutnaStranica: number;
+  ukupnoStranica: number;
+  ukupnoProizvoda: number;
+}) {
   return (
     <div className="rounded-md border border-ink-700 bg-ink-800 shadow-card overflow-hidden">
       <div className="overflow-x-auto">
@@ -52,6 +63,27 @@ export default function KatalogProizvodiTable({ proizvodi }: { proizvodi: Katalo
             })}
           </tbody>
         </table>
+      </div>
+      <div className="flex items-center justify-between gap-4 border-t border-ink-700 px-5 py-3 text-sm">
+        <p className="text-ink-400">
+          Stranica {trenutnaStranica} od {ukupnoStranica} · {ukupnoProizvoda} proizvoda
+        </p>
+        <div className="flex items-center gap-2">
+          {trenutnaStranica > 1 ? (
+            <Link href={`/proizvodi?page=${trenutnaStranica - 1}`} className="rounded border border-ink-600 px-3 py-1.5 text-ink-200 hover:border-gold hover:text-gold">
+              ← Prethodna
+            </Link>
+          ) : (
+            <span className="rounded border border-ink-700 px-3 py-1.5 text-ink-600">← Prethodna</span>
+          )}
+          {trenutnaStranica < ukupnoStranica ? (
+            <Link href={`/proizvodi?page=${trenutnaStranica + 1}`} className="rounded border border-ink-600 px-3 py-1.5 text-ink-200 hover:border-gold hover:text-gold">
+              Sljedeća →
+            </Link>
+          ) : (
+            <span className="rounded border border-ink-700 px-3 py-1.5 text-ink-600">Sljedeća →</span>
+          )}
+        </div>
       </div>
     </div>
   );

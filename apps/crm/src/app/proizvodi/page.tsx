@@ -1,15 +1,30 @@
 import { db } from "@/lib/db";
 import { gotoviProizvodi, cijenaZlataPovijest, products } from "@/lib/db/schema";
-import { desc } from "drizzle-orm";
+import { count, desc } from "drizzle-orm";
 import ProizvodiTable from "@/components/ProizvodiTable";
 import KatalogProizvodiTable from "@/components/KatalogProizvodiTable";
 import { Info } from "lucide-react";
 
 export const revalidate = 0;
 
-export default async function ProizvodiPage() {
+const KATALOG_PAGE_SIZE = 25;
+
+export default async function ProizvodiPage({
+  searchParams,
+}: {
+  searchParams?: { page?: string };
+}) {
+  const requestedPage = Number.parseInt(searchParams?.page || "1", 10);
+  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+
+  const [[{ total: ukupnoUKatalogu }]] = await Promise.all([
+    db.select({ total: count() }).from(products),
+  ]);
+  const ukupnoStranica = Math.max(1, Math.ceil(ukupnoUKatalogu / KATALOG_PAGE_SIZE));
+  const trenutnaStranica = Math.min(page, ukupnoStranica);
+
   const [katalog, proizvodi, [cijenaZlata]] = await Promise.all([
-    db.select().from(products).orderBy(products.position, products.id).limit(200),
+    db.select().from(products).orderBy(products.position, products.id).limit(KATALOG_PAGE_SIZE).offset((trenutnaStranica - 1) * KATALOG_PAGE_SIZE),
     db.select().from(gotoviProizvodi).orderBy(desc(gotoviProizvodi.id)).limit(50),
     db
       .select()
@@ -28,11 +43,16 @@ export default async function ProizvodiPage() {
       </header>
 
       <div className="mb-6 flex items-center justify-between rounded-md border border-moss/30 bg-moss/5 px-4 py-3 text-sm">
-        <span className="text-ink-100 font-medium">{katalog.length} proizvoda u katalogu</span>
+        <span className="text-ink-100 font-medium">{ukupnoUKatalogu} proizvoda u katalogu</span>
         <span className="text-ink-400">Katalog i sajt koriste istu bazu.</span>
       </div>
 
-      <KatalogProizvodiTable proizvodi={katalog} />
+      <KatalogProizvodiTable
+        proizvodi={katalog}
+        trenutnaStranica={trenutnaStranica}
+        ukupnoStranica={ukupnoStranica}
+        ukupnoProizvoda={ukupnoUKatalogu}
+      />
 
       {proizvodi.length > 0 && <><div className="mt-10 mb-6 flex items-start gap-2 text-xs text-ink-400 bg-ink-800 border border-ink-700 rounded-md px-4 py-3 shadow-card">
         <Info size={14} className="mt-0.5 shrink-0 text-gold" />
