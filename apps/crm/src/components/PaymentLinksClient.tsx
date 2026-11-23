@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Copy, Check, FileText, Ban, Link2 } from "lucide-react";
+import { Plus, X, Copy, Check, FileText, Ban, Link2, Send } from "lucide-react";
 
 type PaymentLink = {
   id: number;
   token: string;
   kupacIme: string | null;
+  kupacEmail: string | null;
   opis: string | null;
   iznos: number;
   valuta: string | null;
@@ -52,6 +53,7 @@ export default function PaymentLinksClient({
   const [busy, setBusy] = useState<number | null>(null);
   const [novi, setNovi] = useState({
     kupacIme: "",
+    kupacEmail: "",
     opis: "",
     iznos: "",
     valuta: "EUR",
@@ -67,6 +69,7 @@ export default function PaymentLinksClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         kupacIme:  novi.kupacIme || null,
+        kupacEmail: novi.kupacEmail || null,
         opis:      novi.opis || null,
         iznos:     Number(novi.iznos),
         valuta:    novi.valuta,
@@ -78,9 +81,34 @@ export default function PaymentLinksClient({
       const { paymentLink } = await res.json();
       setLinkovi((l) => [paymentLink, ...l]);
       setFormaOtvorena(false);
-      setNovi({ kupacIme: "", opis: "", iznos: "", valuta: "EUR", napomena: "", heroImage: "" });
+      setNovi({ kupacIme: "", kupacEmail: "", opis: "", iznos: "", valuta: "EUR", napomena: "", heroImage: "" });
     }
     setBusy(null);
+  }
+
+  async function posaljiEmail(link: PaymentLink) {
+    let email = (link.kupacEmail || "").trim();
+    if (!email) {
+      email = (prompt("Email kupca za slanje linka:") || "").trim();
+      if (!email) return;
+    }
+    setBusy(link.id);
+    try {
+      const res = await fetch(`/api/payment-links/${link.id}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setLinkovi((l) => l.map((x) => (x.id === link.id ? { ...x, kupacEmail: email } : x)));
+        alert(`Email poslat na ${email}`);
+      } else {
+        alert(`Greška pri slanju: ${data.error || res.status}`);
+      }
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function opoziLink(id: number) {
@@ -167,6 +195,17 @@ export default function PaymentLinksClient({
                 placeholder="Ime kupca (opciono)"
                 value={novi.kupacIme}
                 onChange={(e) => setNovi((n) => ({ ...n, kupacIme: e.target.value }))}
+                className="bg-ink-800 border border-ink-600 text-ink-100 px-3 py-2 text-sm rounded focus:outline-none focus:border-gold"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-silver uppercase tracking-wider">Email kupca</label>
+              <input
+                type="email"
+                placeholder="kupac@email.com (za slanje linka)"
+                value={novi.kupacEmail}
+                onChange={(e) => setNovi((n) => ({ ...n, kupacEmail: e.target.value }))}
                 className="bg-ink-800 border border-ink-600 text-ink-100 px-3 py-2 text-sm rounded focus:outline-none focus:border-gold"
               />
             </div>
@@ -306,6 +345,18 @@ export default function PaymentLinksClient({
                           <Copy className="w-4 h-4" />
                         )}
                       </button>
+
+                      {/* Pošalji email */}
+                      {link.status === "aktivan" && (
+                        <button
+                          onClick={() => posaljiEmail(link)}
+                          disabled={busy === link.id}
+                          title="Pošalji link na email"
+                          className="p-1.5 rounded text-silver hover:text-gold hover:bg-ink-700 transition disabled:opacity-40"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      )}
 
                       {/* Faktura */}
                       <button
