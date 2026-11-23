@@ -400,10 +400,11 @@ export default function PaymentLinksClient({
                         <button
                           onClick={() => posaljiFakturu(link)}
                           disabled={busy === link.id}
-                          title="Pošalji fakturu emailom"
-                          className="p-1.5 rounded text-silver hover:text-gold hover:bg-ink-700 transition disabled:opacity-40"
+                          title="Pošalji fakturu emailom kupcu i info@palladio.hr"
+                          className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-gold border border-gold/40 hover:bg-gold/10 transition disabled:opacity-40"
                         >
                           <Mail className="w-4 h-4" />
+                          Pošalji fakturu
                         </button>
                       )}
 

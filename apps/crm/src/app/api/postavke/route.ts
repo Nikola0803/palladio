@@ -10,6 +10,9 @@ const DOZVOLJENI_KLJUCEVI: PostavkaKljuc[] = [
   "WOOCOMMERCE_CONSUMER_SECRET",
   "GOLDPRICE_API_KEY",
   "BREVO_API_KEY",
+  "RESEND_API_KEY",
+  "EMAIL_FROM",
+  "EMAIL_BCC",
 ];
 
 export async function POST(req: NextRequest) {

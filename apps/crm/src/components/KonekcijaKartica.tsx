@@ -15,7 +15,7 @@ export default function KonekcijaKartica({
 }: {
   naziv: string;
   opis: string;
-  servisZaTest: "wordpress" | "goldprice" | "brevo" | "woocommerce";
+  servisZaTest: "wordpress" | "goldprice" | "brevo" | "woocommerce" | "resend";
   polja: Polje[];
   pocetneVrijednosti: Record<string, string>;
   dodatnoIspod?: React.ReactNode;

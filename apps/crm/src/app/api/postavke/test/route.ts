@@ -72,6 +72,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, poruka: `Povezano kao ${data.email}` });
     }
 
+    if (servis === "resend") {
+      if (!postavke.RESEND_API_KEY) {
+        return NextResponse.json({ ok: false, poruka: "Nedostaje Resend API ključ" });
+      }
+      const res = await fetch("https://api.resend.com/domains", {
+        headers: { Authorization: `Bearer ${postavke.RESEND_API_KEY}` },
+      });
+      if (!res.ok) {
+        return NextResponse.json({ ok: false, poruka: `Resend odgovorio sa ${res.status} — provjeri ključ` });
+      }
+      return NextResponse.json({ ok: true, poruka: "Resend je povezan i spreman za slanje faktura." });
+    }
+
     return NextResponse.json({ ok: false, poruka: "Nepoznat servis" }, { status: 400 });
   } catch (e) {
     return NextResponse.json({

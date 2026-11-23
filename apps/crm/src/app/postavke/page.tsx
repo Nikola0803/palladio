@@ -76,6 +76,20 @@ export default async function PostavkePage() {
           polja={[{ kljuc: "BREVO_API_KEY", label: "Brevo API ključ", tip: "password" }]}
           pocetneVrijednosti={{ BREVO_API_KEY: p.BREVO_API_KEY }}
         />
+
+        <KonekcijaKartica
+          naziv="Email fakture (Resend)"
+          opis="Za slanje plaćenih faktura kupcu i kopije na info@palladio.hr"
+          servisZaTest="resend"
+          polja={[
+            { kljuc: "RESEND_API_KEY", label: "Resend API ključ", tip: "password" },
+            { kljuc: "EMAIL_FROM", label: "Pošiljatelj (npr. Palladio <info@palladio.hr>)" },
+          ]}
+          pocetneVrijednosti={{
+            RESEND_API_KEY: p.RESEND_API_KEY,
+            EMAIL_FROM: p.EMAIL_FROM,
+          }}
+        />
       </div>
     </div>
   );
