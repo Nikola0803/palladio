@@ -28,6 +28,7 @@ export default function ProductEditor({ product, goldPrice }: { product: Product
     images: parseImages(product.images).join("\n"),
   });
   const [saving, setSaving] = useState(false);
+  const [refreshingGold, setRefreshingGold] = useState(false);
   const [error, setError] = useState("");
   const set = (field: keyof typeof form, value: string | boolean) => setForm((current) => ({ ...current, [field]: value }));
   const input = "mt-1 w-full rounded-md border border-ink-600 bg-ink-900 px-3 py-2 text-sm text-ink-100 outline-none focus:border-gold";
@@ -49,6 +50,17 @@ export default function ProductEditor({ product, goldPrice }: { product: Product
     router.push("/proizvodi"); router.refresh();
   }
 
+  async function refreshGoldPrice() {
+    setRefreshingGold(true); setError("");
+    const response = await fetch("/api/gold-price/refresh", { method: "POST" });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      setError(body.error || "Cijena zlata nije dohvaćena.");
+      setRefreshingGold(false); return;
+    }
+    router.refresh();
+  }
+
   return <form onSubmit={save} className="max-w-5xl p-4 sm:p-6 lg:p-8">
     <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
       <div><p className="text-xs uppercase tracking-wide text-gold">Katalog proizvoda</p><h1 className="mt-1 font-display text-3xl text-ink-100">Uredi proizvod</h1><p className="mt-1 text-sm text-ink-400">ID #{product.id}</p></div>
@@ -67,7 +79,7 @@ export default function ProductEditor({ product, goldPrice }: { product: Product
         <p className="text-sm text-ink-400">Ostavi akcijsku cijenu praznom ako proizvod nije na akciji.</p>
       </section>
     </div>
-    <section className="mt-6 space-y-4 rounded-md border border-gold/30 bg-gold/5 p-5 shadow-card"><h2 className="font-display text-xl text-ink-100">Kalkulacija zlata</h2><p className="text-sm text-ink-400">Primjer: 12,5 g · čistoća 585 · trenutna tržišna cijena za 1 g = vrijednost metala. Zatim ručno postavi prodajnu cijenu s radom i maržom.</p><div className="grid gap-4 sm:grid-cols-2"><label className={label}>Čistoća<select value={form.metalPurity} onChange={(e) => set("metalPurity", e.target.value)} className={input}><option value="585">585 (14k / 58,5%)</option><option value="750">750 (18k / 75%)</option><option value="925">925 (sterling srebro)</option></select></label><label className={label}>Gramaža<input inputMode="decimal" placeholder="npr. 12.5" value={form.totalWeight} onChange={(e) => set("totalWeight", e.target.value)} className={input} /></label></div>{goldPerGram ? <div className="rounded bg-ink-900/60 px-4 py-3 text-sm text-ink-100">Tržišna cijena: <strong>€{goldPerGram.toFixed(2)} / g</strong>{goldPrice && <span className="ml-2 text-ink-400">(ažurirano {new Date(goldPrice.vrijeme).toLocaleString("hr-HR")})</span>} {metalValue && <><br />Vrijednost metala: <strong>€{metalValue.toFixed(2)}</strong> <button type="button" onClick={() => set("regularPrice", metalValue.toFixed(2))} className="ml-3 text-xs text-gold underline">Preuzmi kao redovnu cijenu</button></>}</div> : <p className="text-sm text-rose">Nema spremljene tržišne cijene — provjeri Goldprice API u Postavkama.</p>}</section>
+    <section className="mt-6 space-y-4 rounded-md border border-gold/30 bg-gold/5 p-5 shadow-card"><h2 className="font-display text-xl text-ink-100">Kalkulacija zlata</h2><p className="text-sm text-ink-400">Primjer: 12,5 g · čistoća 585 · trenutna tržišna cijena za 1 g = vrijednost metala. Zatim ručno postavi prodajnu cijenu s radom i maržom.</p><div className="grid gap-4 sm:grid-cols-2"><label className={label}>Čistoća<select value={form.metalPurity} onChange={(e) => set("metalPurity", e.target.value)} className={input}><option value="585">585 (14k / 58,5%)</option><option value="750">750 (18k / 75%)</option><option value="925">925 (sterling srebro)</option></select></label><label className={label}>Gramaža<input inputMode="decimal" placeholder="npr. 12.5" value={form.totalWeight} onChange={(e) => set("totalWeight", e.target.value)} className={input} /></label></div>{goldPerGram ? <div className="rounded bg-ink-900/60 px-4 py-3 text-sm text-ink-100">Tržišna cijena: <strong>€{goldPerGram.toFixed(2)} / g</strong>{goldPrice && <span className="ml-2 text-ink-400">(ažurirano {new Date(goldPrice.vrijeme).toLocaleString("hr-HR")})</span>} {metalValue && <><br />Vrijednost metala: <strong>€{metalValue.toFixed(2)}</strong> <button type="button" onClick={() => set("regularPrice", metalValue.toFixed(2))} className="ml-3 text-xs text-gold underline">Preuzmi kao redovnu cijenu</button></>}</div> : <div className="flex items-center gap-3"><p className="text-sm text-rose">Nema spremljene tržišne cijene.</p><button type="button" onClick={refreshGoldPrice} disabled={refreshingGold} className="rounded border border-gold/50 px-3 py-1.5 text-xs text-gold disabled:opacity-50">{refreshingGold ? "Osvježavam…" : "Osvježi cijenu sada"}</button></div>}</section>
     <section className="mt-6 space-y-5 rounded-md border border-ink-700 bg-ink-800 p-5 shadow-card"><h2 className="font-display text-xl text-ink-100">Opis</h2><label className={label}>Kratki opis<textarea value={form.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} rows={3} className={input} /></label><label className={label}>Puni opis<textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={10} className={input} /></label></section>
     <section className="mt-6 space-y-3 rounded-md border border-ink-700 bg-ink-800 p-5 shadow-card"><h2 className="font-display text-xl text-ink-100">Slike</h2><p className="text-sm text-ink-400">Jedan URL slike po retku. Prva slika je glavna slika proizvoda.</p><textarea value={form.images} onChange={(e) => set("images", e.target.value)} rows={8} className={input} placeholder="https://…" /><div className="flex flex-wrap gap-3">{form.images.split(/\r?\n/).map((url) => url.trim()).filter(Boolean).map((url) => <img key={url} src={url} alt="Pregled proizvoda" className="h-20 w-20 rounded object-cover bg-ink-900" />)}</div></section>
   </form>;
