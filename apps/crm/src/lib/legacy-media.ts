@@ -28,7 +28,12 @@ export function readLegacyUpload(uploadPath: string): Promise<{
         method: "GET",
         path: `/wp-content/uploads/${safePath}`,
         servername: WORDPRESS_HOST,
-        lookup: (_hostname, _options, callback) => callback(null, HOSTINGER_IP, 4),
+        lookup: (_hostname, options, callback) => {
+          // Modern Node requests with `all: true`; in that mode the callback
+          // must receive an address array rather than a single address.
+          if (options.all) return callback(null, [{ address: HOSTINGER_IP, family: 4 }]);
+          return callback(null, HOSTINGER_IP, 4);
+        },
       },
       (response) => {
         const chunks: Buffer[] = [];
