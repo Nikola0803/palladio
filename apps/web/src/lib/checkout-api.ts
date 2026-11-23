@@ -113,3 +113,15 @@ export async function createPaymentIntent(
   if (!res.ok) throw new Error(data?.message || "Greška PaymentIntent");
   return data;
 }
+
+export async function linkPaymentIntentToOrder(intentId: string, clientSecret: string, orderId: number): Promise<void> {
+  const res = await fetch(`${CRM_URL}/api/stripe/cart-intent/${encodeURIComponent(intentId)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ order_id: orderId, client_secret: clientSecret }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || "Narudžba se nije mogla povezati s plaćanjem.");
+  }
+}

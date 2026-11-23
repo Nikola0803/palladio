@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { paymentLinks } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { getSvePostavke } from "@/lib/settings";
+import { wooOznaciNarudzbuPlacenom } from "@/lib/woocommerce";
 
 export const dynamic = "force-dynamic";
 
@@ -39,13 +41,26 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.type === "payment_intent.succeeded") {
-    const pi = event.data.object as { metadata?: { payment_link_id?: string } };
+    const pi = event.data.object as { id?: string; metadata?: { payment_link_id?: string; order_id?: string } };
     const linkId = pi.metadata?.payment_link_id;
     if (linkId) {
       await db
         .update(paymentLinks)
         .set({ status: "placen", placenoAt: new Date(), azurirano: new Date() })
         .where(eq(paymentLinks.id, Number(linkId)));
+    }
+
+    const orderId = Number(pi.metadata?.order_id);
+    if (Number.isInteger(orderId) && orderId > 0 && pi.id) {
+      const settings = await getSvePostavke();
+      const siteUrl = settings.WC_SITE_URL || settings.WP_SITE_URL;
+      if (siteUrl && settings.WOOCOMMERCE_CONSUMER_KEY && settings.WOOCOMMERCE_CONSUMER_SECRET) {
+        await wooOznaciNarudzbuPlacenom(
+          { siteUrl, consumerKey: settings.WOOCOMMERCE_CONSUMER_KEY, consumerSecret: settings.WOOCOMMERCE_CONSUMER_SECRET },
+          orderId,
+          pi.id
+        );
+      }
     }
   }
 

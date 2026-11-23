@@ -10,7 +10,7 @@ import {
 } from "@stripe/react-stripe-js";
 import Breadcrumbs from "../components/ui/Breadcrumbs";
 import { getCart } from "../lib/store-api";
-import { placeOrder, createPaymentIntent, type BillingAddress } from "../lib/checkout-api";
+import { placeOrder, createPaymentIntent, linkPaymentIntentToOrder, type BillingAddress } from "../lib/checkout-api";
 
 const PK = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
 const stripePromise = PK ? loadStripe(PK) : null;
@@ -55,7 +55,7 @@ function Field({
 type CartData = Awaited<ReturnType<typeof getCart>>;
 
 // ── PaymentElement form (needs Stripe context) ─────────────────────────────
-function CheckoutForm({ clientSecret }: { clientSecret: string }) {
+function CheckoutForm({ clientSecret, intentId }: { clientSecret: string; intentId: string }) {
   const stripe   = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
@@ -108,9 +108,13 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
         customer_note:    fields.note,
       });
 
+      // Link this intent to the real Woo order before charging it. Stripe's
+      // webhook then marks that exact Woo order as paid/processing.
+      await linkPaymentIntentToOrder(intentId, clientSecret, order.order_id);
+
       // 2. Potvrdi plaćanje s PaymentElement
       const returnUrl = `${window.location.origin}/order-received/${order.order_id}?key=${order.order_key}`;
-      const { error: stripeErr } = await stripe.confirmPayment({
+      const { error: stripeErr, paymentIntent } = await stripe.confirmPayment({
         elements,
         clientSecret,
         confirmParams: {
@@ -133,6 +137,9 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
       });
 
       if (stripeErr) throw new Error(stripeErr.message || "Stripe greška.");
+      if (paymentIntent && !["succeeded", "processing"].includes(paymentIntent.status)) {
+        throw new Error("Plaćanje nije potvrđeno. Pokušaj ponovo.");
+      }
 
       navigate(`/order-received/${order.order_id}?key=${order.order_key}`);
     } catch (err: unknown) {
@@ -301,6 +308,7 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
 // ── Outer wrapper: fetches PaymentIntent client_secret, then renders Elements ──
 export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [intentId, setIntentId] = useState<string | null>(null);
   const [initError, setInitError] = useState("");
 
   useEffect(() => {
@@ -309,8 +317,9 @@ export default function CheckoutPage() {
         const totalCents = Number(c.totals.total_price);
         const currency   = c.totals.currency_code.toLowerCase();
         if (totalCents < 50) return;
-        const { client_secret } = await createPaymentIntent(totalCents, currency, 0);
+        const { client_secret, intent_id } = await createPaymentIntent(totalCents, currency, 0);
         setClientSecret(client_secret);
+        setIntentId(intent_id || null);
       })
       .catch(() => setInitError("Greška pri učitavanju checkout-a. Osvježi stranicu."));
   }, []);
@@ -343,7 +352,7 @@ export default function CheckoutPage() {
       <section className="max-w-5xl mx-auto px-6 py-10 md:py-16">
         <h1 className="bv-title md:text-[22px] text-center mb-12">Checkout</h1>
 
-        {!clientSecret ? (
+        {!clientSecret || !intentId ? (
           /* Loading skeleton */
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 lg:gap-16">
             <div className="space-y-6">
@@ -400,7 +409,7 @@ export default function CheckoutPage() {
               },
             }}
           >
-            <CheckoutForm clientSecret={clientSecret} />
+            <CheckoutForm clientSecret={clientSecret} intentId={intentId} />
           </Elements>
         )}
       </section>
