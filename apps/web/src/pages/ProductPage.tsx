@@ -91,6 +91,8 @@ export default function ProductPage() {
               <img
                 src={mainImage.src}
                 alt={mainImage.alt || product.name}
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -112,7 +114,7 @@ export default function ProductPage() {
                   }`}
                   aria-label={`View image ${i + 1}`}
                 >
-                  <img src={img.src} alt={img.alt || product.name} className="w-full h-full object-cover" />
+                  <img src={img.src} alt={img.alt || product.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

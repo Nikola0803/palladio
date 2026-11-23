@@ -103,6 +103,6 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(
     { items, total, page, per_page: perPage },
-    { headers: CORS }
+    { headers: { ...CORS, "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" } }
   );
 }

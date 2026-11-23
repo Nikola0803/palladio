@@ -37,8 +37,8 @@ export default function MegaMenu({
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }) {
-  const images = useCategoryImages(topLevel);
-  const { data: promo } = useAsync(() => getProducts({ random: true, perPage: 7 }), []);
+  const images = useCategoryImages(open ? topLevel : []);
+  const { data: promo } = useAsync(() => open ? getProducts({ random: true, perPage: 7 }) : Promise.resolve(null), [open]);
   const promoProduct = promo?.items?.[0];
   const featuredPieces = (promo?.items || []).slice(1, 7);
   const promoImage = fullSize(promoProduct?.images?.[0]?.src);
@@ -70,6 +70,8 @@ export default function MegaMenu({
                     <img
                       src={images[c.id]}
                       alt={c.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   )}
@@ -90,6 +92,8 @@ export default function MegaMenu({
                         <img
                           src={p.images[0].src}
                           alt={p.name}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                       )}
@@ -114,7 +118,7 @@ export default function MegaMenu({
 
         {promoProduct && (
           <div className="relative h-[420px] bg-[#f4f3f1] overflow-hidden">
-            <img src={promoImage} alt={promoProduct.name} className="absolute inset-0 w-full h-full object-cover" />
+            <img src={promoImage} alt={promoProduct.name} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6 text-white">
               <h3 className="bv-title mb-4 line-clamp-2">{promoProduct.name}</h3>

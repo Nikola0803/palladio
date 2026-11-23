@@ -28,7 +28,12 @@ export async function GET(req: NextRequest) {
       headers: {
         ...CORS,
         "Content-Type": upstream.contentType || "application/octet-stream",
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Length": String(upstream.body.length),
+        // Images are immutable uploads. Cache them at the browser and CDN so
+        // Hostinger is only contacted on the first request for each image.
+        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+        "CDN-Cache-Control": "public, max-age=31536000, immutable",
+        "Vercel-CDN-Cache-Control": "public, max-age=31536000, immutable",
       },
     });
   } catch {

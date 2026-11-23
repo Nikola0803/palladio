@@ -22,6 +22,7 @@ export default function CategoryBanner({
           src={imageUrl}
           alt={title}
           loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-[1.03]"
         />
       )}

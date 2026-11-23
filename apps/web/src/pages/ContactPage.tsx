@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import Breadcrumbs from "../components/ui/Breadcrumbs";
+import { crmUrl } from "../lib/env";
 
 // Subjects relevant to an actual streetwear/custom-jewelry shop — not
 // Bvlgari's "book a virtual appointment" style luxury-boutique language.
@@ -57,38 +58,28 @@ const initialState: FormState = {
 
 export default function ContactPage() {
   const [form, setForm] = useState<FormState>(initialState);
-  const [status, setStatus] = useState<"idle" | "sent">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.consent) return;
-
-    // No backend contact endpoint exists yet (no Contact Form 7 / custom
-    // palladio/v1/contact REST route wired up), so this opens the visitor's
-    // email client with the form pre-filled rather than silently pretending
-    // to submit somewhere. Swap this for a real POST once a backend route
-    // exists.
-    const body = [
-      `Title: ${form.title}`,
-      `Name: ${form.firstName} ${form.lastName}`,
-      `Email: ${form.email}`,
-      form.phone && `Phone: ${form.phone}`,
-      `Country/Region: ${form.country}`,
-      "",
-      form.message,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    window.location.href = `mailto:info@palladio.hr?subject=${encodeURIComponent(
-      `[${form.subject || "General Inquiry"}] Website Contact Form`
-    )}&body=${encodeURIComponent(body)}`;
-
-    setStatus("sent");
+    setStatus("sending");
+    try {
+      const response = await fetch(`${crmUrl(import.meta.env.VITE_CRM_URL)}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!response.ok) throw new Error("Kontakt forma nije poslana.");
+      setStatus("sent");
+      setForm(initialState);
+    } catch {
+      setStatus("error");
+    }
   }
 
   const inputClass =
@@ -232,14 +223,15 @@ export default function ContactPage() {
           </div>
 
           <div className="md:col-span-2 flex flex-col items-center gap-4 pt-4">
-            <button type="submit" className="btn-solid px-16">
-              Submit
+            <button type="submit" disabled={status === "sending"} className="btn-solid px-16 disabled:opacity-50">
+              {status === "sending" ? "Sending…" : "Submit"}
             </button>
             {status === "sent" && (
               <p className="text-xs text-palladio-grey">
-                Your email client should now be open with your message pre-filled — send it from there.
+                Thank you — your message has been sent. We&apos;ll get back to you shortly.
               </p>
             )}
+            {status === "error" && <p className="text-xs text-red-600">We couldn&apos;t send your message. Please try again or email info@palladio.hr.</p>}
           </div>
         </form>
       </section>

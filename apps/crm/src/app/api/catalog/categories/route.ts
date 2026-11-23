@@ -21,17 +21,26 @@ export async function GET(req: NextRequest) {
 
   // Pull all published parent products to extract unique categories
   const rows = await db
-    .select({ categories: products.categories })
+    .select({ categories: products.categories, images: products.images })
     .from(products)
     .where(eq(products.published, true));
 
   // Count products per category
   const counts = new Map<string, number>();
+  const categoryImages = new Map<string, string>();
   for (const row of rows) {
     if (!row.categories) continue;
     for (const cat of row.categories.split(",")) {
       const name = cat.trim();
-      if (name) counts.set(name, (counts.get(name) || 0) + 1);
+      if (name) {
+        counts.set(name, (counts.get(name) || 0) + 1);
+        if (!categoryImages.has(name) && row.images) {
+          try {
+            const image = JSON.parse(row.images)?.find((url: unknown) => typeof url === "string");
+            if (image) categoryImages.set(name, image);
+          } catch {}
+        }
+      }
     }
   }
 
@@ -43,9 +52,14 @@ export async function GET(req: NextRequest) {
       slug: name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
       description: "",
       count,
-      image: null,
+      image: categoryImages.get(name) || null,
       parent: 0,
     }));
 
-  return NextResponse.json(categories, { headers: CORS });
+  return NextResponse.json(categories, {
+    headers: {
+      ...CORS,
+      "Cache-Control": "public, s-maxage=600, stale-while-revalidate=86400",
+    },
+  });
 }

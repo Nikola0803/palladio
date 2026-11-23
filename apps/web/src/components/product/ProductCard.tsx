@@ -17,6 +17,7 @@ export default function ProductCard({ product }: { product: Product }) {
             src={image.src}
             alt={image.alt || product.name}
             loading="lazy"
+            decoding="async"
             className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
           />
         ) : (

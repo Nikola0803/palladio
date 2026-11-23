@@ -11,15 +11,11 @@ export default function CategoryGrid({ categories }: { categories: Category[] })
             to={`/collection/${cat.slug}`}
             className="group relative block aspect-[4/5] overflow-hidden bg-palladio-offwhite"
           >
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-              style={{
-                backgroundImage: cat.image
-                  ? `url(${cat.image})`
-                  : "linear-gradient(135deg,#efece6 0%,#d8d2c4 100%)",
-              }}
-              aria-hidden="true"
-            />
+            {cat.image ? (
+              <img src={cat.image} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-[#efece6] to-[#d8d2c4]" aria-hidden="true" />
+            )}
             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
               <span className="tracked-label border-b border-white pb-1">{cat.name}</span>
