@@ -12,4 +12,12 @@ export const cleanUrl = (v?: string | null): string =>
 // cross-origin. Set VITE_CRM_URL to its real, reachable domain. If it is unset
 // we fall back to the project's default Vercel domain.
 const CRM_FALLBACK = "https://crm.palladio.hr";
-export const crmUrl = (v?: string | null): string => cleanUrl(v) || CRM_FALLBACK;
+// `palladio-crm.vercel.app` is an old deployment that still serves catalog
+// data but no longer serves the Hostinger image proxy. Some older Vercel
+// environment settings contain it, so route those builds to the live custom
+// CRM domain instead.
+const LEGACY_CRM_URL = "https://palladio-crm.vercel.app";
+export const crmUrl = (v?: string | null): string => {
+  const configured = cleanUrl(v);
+  return !configured || configured === LEGACY_CRM_URL ? CRM_FALLBACK : configured;
+};
