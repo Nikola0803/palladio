@@ -2,11 +2,15 @@
 // leading BOM / zero-width / non-breaking space. Left in a URL it turns
 // "https://x" into an invalid string (seen as "%EF%BB%BFhttps:/..."), so fetch
 // fails and links break. Sanitize every env-derived URL through this.
-export const cleanUrl = (v?: string | null): string =>
-  (v || "")
+export const cleanUrl = (v?: string | null): string => {
+  const url = (v || "")
     .replace(/[﻿​ ]/g, "")
     .trim()
     .replace(/\/+$/, "");
+  // The apex domain redirects to www. Store API POST/OPTIONS requests cannot
+  // follow that redirect under CORS, so always call the canonical origin.
+  return url === "https://palladio.hr" ? "https://www.palladio.hr" : url;
+};
 
 // The CRM (catalog / blog / PaymentIntent) is a separate Vercel app, reached
 // cross-origin. Set VITE_CRM_URL to its real, reachable domain. If it is unset
