@@ -11,5 +11,5 @@ export const cleanUrl = (v?: string | null): string =>
 // The CRM (catalog / blog / PaymentIntent) is a separate Vercel app, reached
 // cross-origin. Set VITE_CRM_URL to its real, reachable domain. If it is unset
 // we fall back to the project's default Vercel domain.
-const CRM_FALLBACK = "https://palladio-crm.vercel.app";
+const CRM_FALLBACK = "https://crm.palladio.hr";
 export const crmUrl = (v?: string | null): string => cleanUrl(v) || CRM_FALLBACK;

@@ -1,5 +1,6 @@
 import { useAsync } from "../hooks/useAsync";
 import { getCategories } from "../lib/api";
+import { wpImage } from "../lib/images";
 import Hero from "../components/home/Hero";
 import CategoryBanner from "../components/home/CategoryBanner";
 
@@ -16,7 +17,7 @@ export default function HomePage() {
         subtitle="Discover the full collection."
         ctaLabel="Shop the Creations"
         ctaHref={categories?.[0] ? `/collection/${categories[0].slug}` : "/"}
-        imageUrl="https://palladio.hr/wp-content/uploads/2026/10/render0.jpg"
+        imageUrl={wpImage("2026/10/render0.jpg")}
       />
 
       {categoriesError && (
@@ -31,7 +32,7 @@ export default function HomePage() {
         <CategoryBanner
           title={featured.name}
           href={`/collection/${featured.slug}`}
-          imageUrl="https://palladio.hr/wp-content/uploads/2026/10/render-1.jpg"
+          imageUrl={wpImage("2026/10/render-1.jpg")}
         />
       )}
     </>
